@@ -515,15 +515,11 @@
 		4F1AF5501AE5296A00C8B8C9 /* RKHTTPResponseSerialization.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F1AF54C1AE5296A00C8B8C9 /* RKHTTPResponseSerialization.h */; };
 		4F3682781AE5BE05008C6BA6 /* AFURLRequestSerialization.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F3682741AE5BE05008C6BA6 /* AFURLRequestSerialization.h */; };
 		4F3682791AE5BE05008C6BA6 /* AFURLRequestSerialization.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F3682741AE5BE05008C6BA6 /* AFURLRequestSerialization.h */; };
-		4F36827A1AE5BE05008C6BA6 /* AFURLRequestSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F3682751AE5BE05008C6BA6 /* AFURLRequestSerialization.m */; };
 		4F36827B1AE5BE05008C6BA6 /* AFURLRequestSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F3682751AE5BE05008C6BA6 /* AFURLRequestSerialization.m */; };
 		4F36827C1AE5BE05008C6BA6 /* AFURLResponseSerialization.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F3682761AE5BE05008C6BA6 /* AFURLResponseSerialization.h */; };
 		4F36827D1AE5BE05008C6BA6 /* AFURLResponseSerialization.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F3682761AE5BE05008C6BA6 /* AFURLResponseSerialization.h */; };
-		4F36827E1AE5BE05008C6BA6 /* AFURLResponseSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F3682771AE5BE05008C6BA6 /* AFURLResponseSerialization.m */; };
 		4F36827F1AE5BE05008C6BA6 /* AFURLResponseSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F3682771AE5BE05008C6BA6 /* AFURLResponseSerialization.m */; };
-		4F3682821AE5BF43008C6BA6 /* AFNetworkReachabilityManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F3682801AE5BF43008C6BA6 /* AFNetworkReachabilityManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4F3682831AE5BF43008C6BA6 /* AFNetworkReachabilityManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F3682801AE5BF43008C6BA6 /* AFNetworkReachabilityManager.h */; };
-		4F3682841AE5BF43008C6BA6 /* AFNetworkReachabilityManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F3682811AE5BF43008C6BA6 /* AFNetworkReachabilityManager.m */; };
 		4F3682851AE5BF43008C6BA6 /* AFNetworkReachabilityManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F3682811AE5BF43008C6BA6 /* AFNetworkReachabilityManager.m */; };
 		4F36828E1AE5DF30008C6BA6 /* RKHTTPJSONRequestSerializer.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F3682861AE5DF30008C6BA6 /* RKHTTPJSONRequestSerializer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4F36828F1AE5DF30008C6BA6 /* RKHTTPJSONRequestSerializer.h in Headers */ = {isa = PBXBuildFile; fileRef = 4F3682861AE5DF30008C6BA6 /* RKHTTPJSONRequestSerializer.h */; };
@@ -951,12 +947,12 @@
 		73D3907114CA19F90093E3D6 /* parent.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = parent.json; sourceTree = "<group>"; };
 		73D3907314CA1A4A0093E3D6 /* child.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = child.json; sourceTree = "<group>"; };
 		73D3907814CA1D710093E3D6 /* channels.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = channels.xml; sourceTree = "<group>"; };
+		8AB68F0A1AE5B3B300DD655A /* RKFetchedResultsControllerUpdateTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RKFetchedResultsControllerUpdateTest.m; sourceTree = "<group>"; };
 		9B15BBB1F11B91C32F72DFBF /* libPods-RestKitFramework.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-RestKitFramework.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A339C3AFD7C094BEAFE92A93 /* Pods-ios.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ios.release.xcconfig"; path = "Pods/Target Support Files/Pods-ios/Pods-ios.release.xcconfig"; sourceTree = "<group>"; };
 		A920AEDAEC3C6599433D2720 /* Pods-osx.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-osx.debug.xcconfig"; path = "Pods/Target Support Files/Pods-osx/Pods-osx.debug.xcconfig"; sourceTree = "<group>"; };
 		AD144E244684975F290D70ED /* Pods-RestKit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RestKit.release.xcconfig"; path = "Pods/Target Support Files/Pods-RestKit/Pods-RestKit.release.xcconfig"; sourceTree = "<group>"; };
 		AD2DD8D9C9EA769B53865C88 /* Pods-RestKit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RestKit.debug.xcconfig"; path = "Pods/Target Support Files/Pods-RestKit/Pods-RestKit.debug.xcconfig"; sourceTree = "<group>"; };
-		8AB68F0A1AE5B3B300DD655A /* RKFetchedResultsControllerUpdateTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RKFetchedResultsControllerUpdateTest.m; sourceTree = "<group>"; };
 		BE05BDCF1782109F00F7C9C9 /* RKRouteTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RKRouteTest.m; sourceTree = "<group>"; };
 		C0F11CE1190883380054AEA0 /* RKPathMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RKPathMatcher.h; sourceTree = "<group>"; };
 		C0F11CE2190883380054AEA0 /* RKPathMatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RKPathMatcher.m; sourceTree = "<group>"; };
@@ -1602,15 +1598,6 @@
 			path = PLISTs;
 			sourceTree = "<group>";
 		};
-		5910B0BC1AC9A23E00721876 /* cats */ = {
-			isa = PBXGroup;
-			children = (
-				5910B0BD1AC9A23E00721876 /* catsWithParent_issue_2194.json */,
-			);
-			path = cats;
-			sourceTree = "<group>";
-		};
-		
 		4F1AF53E1AE528B400C8B8C9 /* HTTP */ = {
 			isa = PBXGroup;
 			children = (
@@ -1641,6 +1628,14 @@
 				4F3682A61AE5E033008C6BA6 /* RKHTTPPropertyListResponseSerializer.m */,
 			);
 			name = Serialization;
+			sourceTree = "<group>";
+		};
+		5910B0BC1AC9A23E00721876 /* cats */ = {
+			isa = PBXGroup;
+			children = (
+				5910B0BD1AC9A23E00721876 /* catsWithParent_issue_2194.json */,
+			);
+			path = cats;
 			sourceTree = "<group>";
 		};
 		E4081DFC15FB89DF00364948 /* ManagedObjectCaching */ = {
@@ -1733,7 +1728,6 @@
 				4F3682A11AE5E004008C6BA6 /* RKHTTPPropertyListRequestSerializer.h in Headers */,
 				4F36828E1AE5DF30008C6BA6 /* RKHTTPJSONRequestSerializer.h in Headers */,
 				4F3682961AE5DF30008C6BA6 /* RKHTTPRequestSerializer.h in Headers */,
-				4F1AF5471AE528C900C8B8C9 /* RKHTTP.h in Headers */,
 				4F3682A71AE5E033008C6BA6 /* RKHTTPPropertyListResponseSerializer.h in Headers */,
 				4F3682921AE5DF30008C6BA6 /* RKHTTPJSONResponseSerializer.h in Headers */,
 				4F1AF54D1AE5296A00C8B8C9 /* RKHTTPRequestSerialization.h in Headers */,
@@ -1744,7 +1738,6 @@
 				25160DE5145650490060A5C5 /* RKPropertyInspector+CoreData.h in Headers */,
 				25160E09145650490060A5C5 /* RKDynamicMapping.h in Headers */,
 				25160E0B145650490060A5C5 /* RKErrorMessage.h in Headers */,
-				4F3682821AE5BF43008C6BA6 /* AFNetworkReachabilityManager.h in Headers */,
 				25160E0F145650490060A5C5 /* RKAttributeMapping.h in Headers */,
 				25160E16145650490060A5C5 /* RKMapperOperation.h in Headers */,
 				DB1148441A0B26B100C8A00A /* RKLumberjackLogger.h in Headers */,
@@ -2169,7 +2162,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
-			showEnvVarsInLog = 0;
 		};
 		25160D2414564E820060A5C5 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -2300,7 +2292,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-RestKit/Pods-RestKit-resources.sh\"\n";
-			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -2329,8 +2320,6 @@
 				25160E48145650490060A5C5 /* RKDotNetDateFormatter.m in Sources */,
 				25160E4B145650490060A5C5 /* RKLog.m in Sources */,
 				25160E4D145650490060A5C5 /* RKMIMETypes.m in Sources */,
-				4F36827E1AE5BE05008C6BA6 /* AFURLResponseSerialization.m in Sources */,
-				4F3682841AE5BF43008C6BA6 /* AFNetworkReachabilityManager.m in Sources */,
 				25160EE41456532C0060A5C5 /* lcl_RK.m in Sources */,
 				25B408281491CDDC00F21111 /* RKPathUtilities.m in Sources */,
 				25B6E95814CF7A1C00B1E881 /* RKErrors.m in Sources */,
@@ -2354,7 +2343,6 @@
 				25AA23D015AF2920006EF62D /* RKManagedObjectMappingOperationDataSource.m in Sources */,
 				2597F99E15AF6DC400E547D7 /* RKRelationshipConnectionOperation.m in Sources */,
 				25104F2115C30CD900829135 /* RKSearchWord.m in Sources */,
-				4F36827A1AE5BE05008C6BA6 /* AFURLRequestSerialization.m in Sources */,
 				25104F2B15C30D1700829135 /* RKManagedObjectStore+RKSearchAdditions.m in Sources */,
 				25104F3115C30E7400829135 /* RKSearchIndexer.m in Sources */,
 				25104F3715C30EF500829135 /* RKSearchPredicate.m in Sources */,
