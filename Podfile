@@ -3,12 +3,12 @@ source 'https://github.com/CocoaPods/Specs.git'
 inhibit_all_warnings!
 
 target :RestKit do
-  platform :ios, '5.1.1'
+  platform :ios, '7.0'
   podspec
 end
 
 target :RestKitFramework do
-  platform :osx, '10.7'
+  platform :osx, '10.8'
   podspec
 end
 
@@ -27,7 +27,7 @@ def import_pods
 end
 
 target :ios do
-  platform :ios, '6.0'
+  platform :ios, '7.0'
   link_with 'RestKitTests'
   import_pods
 end
