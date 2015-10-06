@@ -335,22 +335,22 @@ static NSURL *RKRelativeURLFromURLAndResponseDescriptors(NSURL *URL, NSArray *re
     return URL;
 }
 
-static NSSet *RKGatherManagedObjectsFromObjectWithRelationshipMapping(id object, RKRelationshipMapping *relationshipMapping)
+static void RKGatherManagedObjectsFromObjectWithRelationshipMapping(id object, RKRelationshipMapping *relationshipMapping, NSMutableSet *managedObjects)
 {
-    NSMutableSet *managedObjects = [NSMutableSet set];
     NSSet *relationshipValue = RKFlattenCollectionToSet([object valueForKeyPath:relationshipMapping.destinationKeyPath]);
     for (id relatedObject in relationshipValue) {
+        if ([managedObjects containsObject:relatedObject]) continue;
         if ([relatedObject isKindOfClass:[NSManagedObject class]]) [managedObjects addObject:relatedObject];
-        
+
         if ([relationshipMapping.mapping isKindOfClass:[RKObjectMapping class]]) {
             for (RKRelationshipMapping *childRelationshipMapping in [(RKObjectMapping *)relationshipMapping.mapping relationshipMappings]) {
-                [managedObjects unionSet:RKGatherManagedObjectsFromObjectWithRelationshipMapping(relatedObject, childRelationshipMapping)];
+                RKGatherManagedObjectsFromObjectWithRelationshipMapping(relatedObject, childRelationshipMapping, managedObjects);
             }
         } else if ([relationshipMapping.mapping isKindOfClass:[RKDynamicMapping class]]) {
             for (RKObjectMapping *objectMapping in [(RKDynamicMapping *)relationshipMapping.mapping objectMappings]) {
                 @try {
                     for (RKRelationshipMapping *childRelationshipMapping in objectMapping.relationshipMappings) {
-                        [managedObjects unionSet:RKGatherManagedObjectsFromObjectWithRelationshipMapping(relatedObject, childRelationshipMapping)];
+                        RKGatherManagedObjectsFromObjectWithRelationshipMapping(relatedObject, childRelationshipMapping, managedObjects);
                     }
                 }
                 @catch (NSException *exception) {
@@ -359,7 +359,6 @@ static NSSet *RKGatherManagedObjectsFromObjectWithRelationshipMapping(id object,
             }
         }
     }
-    return managedObjects;
 }
 
 static NSSet *RKManagedObjectsFromObjectWithMappingInfo(id object, RKMappingInfo *mappingInfo)
@@ -373,15 +372,32 @@ static NSSet *RKManagedObjectsFromObjectWithMappingInfo(id object, RKMappingInfo
     if ([[mappingInfo propertyMappings] count] == 0) {
         // This object was matched, but no changes were made. Gather all related objects
         for (RKRelationshipMapping *relationshipMapping in [mappingInfo.objectMapping relationshipMappings]) {
-            [managedObjects unionSet:RKGatherManagedObjectsFromObjectWithRelationshipMapping(object, relationshipMapping)];
+            RKGatherManagedObjectsFromObjectWithRelationshipMapping(object, relationshipMapping, managedObjects);
         }
-    } else {    
+    } else {
         for (NSString *destinationKeyPath in mappingInfo.relationshipMappingInfo) {
-            id relationshipValue = [object valueForKeyPath:destinationKeyPath];
+            id relationshipValue = nil;
+            // Objects in collection may have different types, so destination keypath may be not applicable to each of them
+            if([object conformsToProtocol:@protocol(NSFastEnumeration)]) {
+                NSMutableSet* results = [NSMutableSet set];
+                for (id item in object) {
+                    @try {
+                        id value = [item valueForKeyPath:destinationKeyPath];
+                        [results addObject:value];
+                    } @catch(NSException*) {
+                        continue;
+                    }
+                }
+                
+                relationshipValue = results;
+            } else {
+                relationshipValue = [object valueForKeyPath:destinationKeyPath];
+            }
+            
             NSArray *mappingInfos = (mappingInfo.relationshipMappingInfo)[destinationKeyPath];
             for (RKMappingInfo *relationshipMappingInfo in mappingInfos) {
                 NSUInteger index = [mappingInfos indexOfObject:relationshipMappingInfo];
-                id mappedObjectAtIndex = ([relationshipValue respondsToSelector:@selector(objectAtIndex:)]) ? [NSSet setWithObject:relationshipValue[index]] : relationshipValue;
+                id mappedObjectAtIndex = ([relationshipValue respondsToSelector:@selector(objectAtIndex:)]) ? relationshipValue[index] : relationshipValue;
                 [managedObjects unionSet:RKFlattenCollectionToSet(RKManagedObjectsFromObjectWithMappingInfo(mappedObjectAtIndex, relationshipMappingInfo))];
             }
         }
@@ -400,7 +416,7 @@ static NSSet *RKManagedObjectsFromMappingResultWithMappingInfo(RKMappingResult *
         id objectsAtRoot = mappingResultDictionary[rootKey];
         for (RKMappingInfo *mappingInfo in mappingInfoArray) {
             NSUInteger index = [mappingInfoArray indexOfObject:mappingInfo];
-            id mappedObjectAtIndex = ([objectsAtRoot respondsToSelector:@selector(objectAtIndex:)]) ? [NSSet setWithObject:objectsAtRoot[index]] : objectsAtRoot;
+            id mappedObjectAtIndex = ([objectsAtRoot respondsToSelector:@selector(objectAtIndex:)]) ? objectsAtRoot[index] : objectsAtRoot;
             
             NSSet *managedObjects = RKManagedObjectsFromObjectWithMappingInfo(mappedObjectAtIndex, mappingInfo);
             if (managedObjects) {
@@ -733,7 +749,10 @@ BOOL RKDoesArrayOfResponseDescriptorsContainOnlyEntityMappings(NSArray *response
     if (! [fetchRequests count]) return YES;
     
     // Proceed with cleanup
-    NSSet *managedObjectsInMappingResult = RKManagedObjectsFromMappingResultWithMappingInfo(mappingResult, self.mappingInfo) ?: [NSSet set];
+    __block NSSet *managedObjectsInMappingResult;
+    [self.privateContext performBlockAndWait:^{
+        managedObjectsInMappingResult = RKManagedObjectsFromMappingResultWithMappingInfo(mappingResult, self.mappingInfo) ?: [NSSet set];
+    }];
     NSSet *localObjects = [self localObjectsFromFetchRequests:fetchRequests matchingRequestURL:error];
     if (! localObjects) {
         RKLogError(@"Failed when attempting to fetch local candidate objects for orphan cleanup: %@", error ? *error : nil);
@@ -759,7 +778,7 @@ BOOL RKDoesArrayOfResponseDescriptorsContainOnlyEntityMappings(NSArray *response
 /**
  NOTE: This is more or less a direct port of the functionality provided by `[NSManagedObjectContext saveToPersistentStore:]` in the `RKAdditions` category. We have duplicated the logic here to add in support for checking if the operation has been cancelled since we began cascading up the MOC chain. Because each `performBlockAndWait:` invocation essentially jumps threads and is subject to the availability of the context, it is very possible for the operation to be cancelled during this part of the operation's lifecycle.
  */
-- (BOOL)saveContextToPersistentStore:(NSManagedObjectContext *)contextToSave error:(NSError **)error
+- (BOOL)saveContextToPersistentStore:(NSManagedObjectContext *)contextToSave failedContext:(NSManagedObjectContext **)failedContext error:(NSError **)error
 {
     __block NSError *localError = nil;
     while (contextToSave) {
@@ -776,11 +795,13 @@ BOOL RKDoesArrayOfResponseDescriptorsContainOnlyEntityMappings(NSArray *response
 
         if (! success) {
             if (error) *error = localError;
+            *failedContext = contextToSave;
             return NO;
         }
 
         if (! contextToSave.parentContext && contextToSave.persistentStoreCoordinator == nil) {
             RKLogWarning(@"Reached the end of the chain of nested managed object contexts without encountering a persistent store coordinator. Objects are not fully persisted.");
+            *failedContext = contextToSave;
             return NO;
         }
         contextToSave = contextToSave.parentContext;
@@ -793,11 +814,15 @@ BOOL RKDoesArrayOfResponseDescriptorsContainOnlyEntityMappings(NSArray *response
 {
     __block BOOL success = YES;
     __block NSError *localError = nil;
+    __block NSManagedObjectContext *failedContext = nil;
     if (self.savesToPersistentStore) {
-        success = [self saveContextToPersistentStore:context error:&localError];
+        success = [self saveContextToPersistentStore:context failedContext:&failedContext error:&localError];
     } else {
         [context performBlockAndWait:^{
             success = ([self isCancelled]) ? NO : [context save:&localError];
+            if (!success) {
+                failedContext = context;
+            }
         }];
     }
     if (success) {
@@ -809,8 +834,12 @@ BOOL RKDoesArrayOfResponseDescriptorsContainOnlyEntityMappings(NSArray *response
         }
     } else {
         if (error) *error = localError;
-        RKLogError(@"Failed saving managed object context %@ %@: %@", (self.savesToPersistentStore ? @"to the persistent store" : @""),  context, localError);
-        RKLogCoreDataError(localError);
+        // Logging the error requires calling -[NSManagedObject description] which
+        // can only be done on the context's queue
+        [failedContext performBlock:^{
+            RKLogError(@"Failed saving managed object context %@ %@: %@", (self.savesToPersistentStore ? @"to the persistent store" : @""),  context, localError);
+            RKLogCoreDataError(localError);
+        }];
     }
 
     return success;

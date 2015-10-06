@@ -917,6 +917,11 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
         self.error = [NSError errorWithDomain:RKErrorDomain code:RKMappingErrorInvalidAssignmentPolicy userInfo:userInfo];
         return NO;
     }
+    
+    // Remove existing destination entity before mapping the new one
+    if (relationshipMapping.assignmentPolicy == RKAssignmentPolicyReplace && ![self applyReplaceAssignmentPolicyForRelationshipMapping:relationshipMapping]) {
+        return NO;
+    }
 
     id parentSourceObject = [self parentObjectForRelationshipMapping:relationshipMapping];
     id destinationObject = [self destinationObjectForMappingRepresentation:value parentRepresentation:parentSourceObject withMapping:relationshipMapping.mapping inRelationship:relationshipMapping];
@@ -930,10 +935,6 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
 
     // If the relationship has changed, set it
     if ([self shouldSetValue:&destinationObject forKeyPath:destinationKeyPath usingMapping:relationshipMapping]) {
-        if (! [self applyReplaceAssignmentPolicyForRelationshipMapping:relationshipMapping]) {
-            return NO;
-        }
-        
         RKLogTrace(@"Mapped relationship object from keyPath '%@' to '%@'. Value: %@", relationshipMapping.sourceKeyPath, destinationKeyPath, destinationObject);
         [self.destinationObject setValue:destinationObject forKeyPath:destinationKeyPath];
     } else {
@@ -1267,18 +1268,34 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
         }
     }
     
-    BOOL canSkipMapping = [dataSource respondsToSelector:@selector(mappingOperationShouldSkipPropertyMapping:)] && [dataSource mappingOperationShouldSkipPropertyMapping:self];
-    if (! canSkipMapping) {
-        [self applyNestedMappings];
-        if ([self isCancelled]) return;
-        BOOL mappedSimpleAttributes = [self applyAttributeMappings:[self simpleAttributeMappings]];
-        if ([self isCancelled]) return;
-        BOOL mappedRelationships = [[self relationshipMappings] count] ? [self applyRelationshipMappings] : NO;
-        if ([self isCancelled]) return;
-        // NOTE: We map key path attributes last to allow you to map across the object graphs for objects created/updated by the relationship mappings
-        BOOL mappedKeyPathAttributes = [self applyAttributeMappings:[self keyPathAttributeMappings]];
-        
-        if (!mappedSimpleAttributes && !mappedRelationships && !mappedKeyPathAttributes) {
+    BOOL canSkipProperties = [dataSource respondsToSelector:@selector(mappingOperationShouldSkipPropertyMapping:)] && [dataSource mappingOperationShouldSkipPropertyMapping:self];
+    BOOL canSkipAttributes = canSkipProperties;
+    BOOL canSkipRelationships = canSkipProperties;
+    if ([dataSource respondsToSelector:@selector(mappingOperationShouldSkipRelationshipMapping:)]) {
+        canSkipRelationships = [dataSource mappingOperationShouldSkipRelationshipMapping:self];
+    }
+    if ([dataSource respondsToSelector:@selector(mappingOperationShouldSkipAttributeMapping:)]) {
+        canSkipAttributes = [dataSource mappingOperationShouldSkipAttributeMapping:self];
+    }
+    if (!canSkipRelationships || !canSkipAttributes) {
+        BOOL foundNoSimpleAttributes = NO;
+        BOOL foundNoRelationships = NO;
+        BOOL foundNoKeyPathAttributes = NO;
+        if (!canSkipAttributes) {
+            [self applyNestedMappings];
+            if ([self isCancelled]) return;
+            foundNoSimpleAttributes = ![self applyAttributeMappings:[self simpleAttributeMappings]];
+        }
+        if (!canSkipRelationships) {
+            if ([self isCancelled]) return;
+            foundNoRelationships = [[self relationshipMappings] count] ? ![self applyRelationshipMappings] : YES;
+        }
+        if (!canSkipAttributes) {
+            if ([self isCancelled]) return;
+            // NOTE: We map key path attributes last to allow you to map across the object graphs for objects created/updated by the relationship mappings
+            foundNoKeyPathAttributes = ![self applyAttributeMappings:[self keyPathAttributeMappings]];
+        }
+        if (foundNoSimpleAttributes && foundNoRelationships && foundNoKeyPathAttributes) {
             // We did not find anything to do
             RKLogDebug(@"Mapping operation did not find any mappable values for the attribute and relationship mappings in the given object representation");
             NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"No mappable values found for any of the attributes or relationship mappings" };
