@@ -165,16 +165,20 @@ extern NSString * const RKResponseHasBeenMappedCacheUserInfoKey;
                               failure:(void (^)(RKObjectRequestOperation *operation, NSError *error))failure;
 
 /**
- The callback dispatch queue on success. If `NULL` (default), the main queue is used.
+ The callback dispatch queue on success. If `NULL`, the main queue is used.
  
  The queue is retained while this operation is living
+ 
+ By default, the generic restkit queue is used.
  */
 @property (nonatomic, assign) dispatch_queue_t successCallbackQueue;
 
 /**
- The callback dispatch queue on failure. If `NULL` (default), the main queue is used.
+ The callback dispatch queue on failure. If `NULL`, the main queue is used.
  
  The queue is retained while this operation is living
+ 
+ By default, the generic restkit queue is used.
  */
 @property (nonatomic, assign) dispatch_queue_t failureCallbackQueue;
 

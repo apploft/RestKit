@@ -25,6 +25,8 @@
 
 + (void)initialize
 {
+    [Expecta setAsynchronousTestTimeout:15];
+    
     // Configure fixture bundle. The 'org.restkit.tests' identifier is shared between
     // the logic and application test bundles
     NSBundle *fixtureBundle = [NSBundle bundleWithIdentifier:@"org.restkit.tests"];

@@ -33,7 +33,7 @@
     human.name = @"Test";
     assertThatBool([human.objectID isTemporaryID], is(equalToBool(YES)));
 
-    NSError *error;
+    __block NSError *error;
     BOOL success = [human.managedObjectContext saveToPersistentStore:&error];
     assertThatBool(success, is(equalToBool(YES)));
     [managedObjectStore.mainQueueManagedObjectContext refreshObject:human mergeChanges:YES];
@@ -41,7 +41,13 @@
 
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Human"];
     fetchRequest.predicate = [NSPredicate predicateWithFormat:@"name = %@", @"Test"];
-    NSArray *objects = [managedObjectStore.persistentStoreManagedObjectContext executeFetchRequest:fetchRequest error:&error];
+    
+    __block NSArray *objects = nil;
+    
+    [managedObjectStore.persistentStoreManagedObjectContext performBlockAndWait:^{
+        objects = [managedObjectStore.persistentStoreManagedObjectContext executeFetchRequest:fetchRequest error:&error];
+    }];
+    
     assertThat(objects, hasCountOf(1));
     RKHuman *fetchedHuman = objects[0];
     assertThatBool([fetchedHuman.objectID isTemporaryID], is(equalToBool(NO)));

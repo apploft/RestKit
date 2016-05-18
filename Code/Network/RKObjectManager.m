@@ -174,6 +174,12 @@ extern NSString *RKStringDescribingRequestMethod(RKRequestMethod method);
 
 @implementation RKMappingGraphVisitor
 
+- (instancetype)init
+{
+    NSAssert(NO, @"Incorrect designated initialiser used for this class");
+    return [self initWithMapping:nil];
+}
+
 - (instancetype)initWithMapping:(RKMapping *)mapping
 {
     self = [super init];
@@ -323,6 +329,12 @@ static BOOL RKDoesArrayOfResponseDescriptorsContainMappingForClass(NSArray *resp
 @end
 
 @implementation RKObjectManager
+
+- (instancetype)init
+{
+    NSAssert(NO, @"Incorrect designated initialiser used for this class");
+    return [self initWithHTTPClient:nil];
+}
 
 - (instancetype)initWithHTTPClient:(id<RKHTTPClient>)client
 {

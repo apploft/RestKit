@@ -46,6 +46,36 @@ NSIndexSet *RKCacheableStatusCodes(void)
     return cacheableStatusCodes;
 }
 
+NSString * RKDescriptionStringFromIndexSet(NSIndexSet *indexSet) {
+    NSMutableString *string = [NSMutableString string];
+    
+    NSRange range = NSMakeRange([indexSet firstIndex], 1);
+    while (range.location != NSNotFound) {
+        NSUInteger nextIndex = [indexSet indexGreaterThanIndex:range.location];
+        while (nextIndex == range.location + range.length) {
+            range.length++;
+            nextIndex = [indexSet indexGreaterThanIndex:nextIndex];
+        }
+        
+        if (string.length) {
+            [string appendString:@","];
+        }
+        
+        if (range.length == 1) {
+            [string appendFormat:@"%lu", (long)range.location];
+        } else {
+            NSUInteger firstIndex = range.location;
+            NSUInteger lastIndex = firstIndex + range.length - 1;
+            [string appendFormat:@"%lu-%lu", (long)firstIndex, (long)lastIndex];
+        }
+        
+        range.location = nextIndex;
+        range.length = 1;
+    }
+    
+    return string;
+}
+
 BOOL RKIsSpecificRequestMethod(RKRequestMethod method)
 {
     // check for a power of two

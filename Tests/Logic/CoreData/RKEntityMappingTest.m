@@ -59,7 +59,7 @@
 - (void)testShouldMapACollectionOfObjectsWithDynamicKeys
 {
     RKManagedObjectStore *managedObjectStore = [RKTestFactory managedObjectStore];
-    managedObjectStore.managedObjectCache = [[RKInMemoryManagedObjectCache alloc] initWithManagedObjectContext:managedObjectStore.persistentStoreManagedObjectContext];
+    managedObjectStore.managedObjectCache = [[RKInMemoryManagedObjectCache alloc] initWithManagedObjectContext:managedObjectStore.mainQueueManagedObjectContext];
     RKEntityMapping *mapping = [RKEntityMapping mappingForEntityForName:@"Human" inManagedObjectStore:managedObjectStore];
     mapping.forceCollectionMapping = YES;
     mapping.identificationAttributes = @[ @"name" ];
@@ -72,13 +72,13 @@
     id mockCacheStrategy = [OCMockObject partialMockForObject:managedObjectStore.managedObjectCache];
     [[[mockCacheStrategy expect] andForwardToRealObject] managedObjectsWithEntity:OCMOCK_ANY
                                                                   attributeValues:@{ @"name": @"blake" }
-                                                           inManagedObjectContext:managedObjectStore.persistentStoreManagedObjectContext];
+                                                           inManagedObjectContext:managedObjectStore.mainQueueManagedObjectContext];
     [[[mockCacheStrategy expect] andForwardToRealObject] managedObjectsWithEntity:OCMOCK_ANY
                                                                   attributeValues:@{ @"name": @"rachit" }
-                                                           inManagedObjectContext:managedObjectStore.persistentStoreManagedObjectContext];
+                                                           inManagedObjectContext:managedObjectStore.mainQueueManagedObjectContext];
     id userInfo = [RKTestFixture parsedObjectWithContentsOfFixture:@"DynamicKeys.json"];
     RKMapperOperation *mapper = [[RKMapperOperation alloc] initWithRepresentation:userInfo mappingsDictionary:mappingsDictionary];
-    RKManagedObjectMappingOperationDataSource *dataSource = [[RKManagedObjectMappingOperationDataSource alloc] initWithManagedObjectContext:managedObjectStore.persistentStoreManagedObjectContext
+    RKManagedObjectMappingOperationDataSource *dataSource = [[RKManagedObjectMappingOperationDataSource alloc] initWithManagedObjectContext:managedObjectStore.mainQueueManagedObjectContext
                                                                                                                                       cache:managedObjectStore.managedObjectCache];
     mapper.mappingOperationDataSource = dataSource;
     [mapper start];

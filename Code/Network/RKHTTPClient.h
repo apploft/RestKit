@@ -24,7 +24,7 @@
 @property (nonatomic, strong) NSSet *HTTPMethodsEncodingParametersInURI;
 
 /**
- Requests created with `requestWithMethod:URLString:parameters:` & `multipartFormRequestWithMethod:URLString:parameters:constructingBodyWithBlock:` are constructed with a set of default headers using a parameter serialization specified by this property. By default, this is set to an instance of `AFHTTPRequestSerializer`, which serializes query string parameters for `GET`, `HEAD`, and `DELETE` requests, or otherwise URL-form-encodes HTTP message bodies.
+ Requests created with `multipartFormRequestWithMethod:URLString:parameters:constructingBodyWithBlock:` are constructed with a set of default headers using a parameter serialization specified by this property. By default, this is set to an instance of `RKHTTPRequestSerializer`, which serializes query string parameters for `GET`, `HEAD`, and `DELETE` requests, or otherwise URL-form-encodes HTTP message bodies.
  
  @warning `requestSerializer` must not be `nil`.
  */
@@ -32,7 +32,7 @@
 @property (nonatomic) id <RKHTTPRequestSerialization> requestSerializer;
 
 /**
- Requests created with `requestWithMethod:URLString:parameters:` & `multipartFormRequestWithMethod:URLString:parameters:constructingBodyWithBlock:` are constructed with a set of default headers using a parameter serialization specified by this property. By default, this serializes query string parameters for `GET`, `HEAD`, and `DELETE` requests, or otherwise uses this class if specified or selects an appropriate serializer from RKMIMETypeSerialization:dataFromObject:mimeType.
+ Requests created with `requestWithMethod:URLString:parameters:` are constructed with a set of default headers using a parameter serialization specified by this property. By default, this serializes query string parameters for `GET`, `HEAD`, and `DELETE` requests, or otherwise uses this class if specified or selects an appropriate serializer from RKMIMETypeSerialization:dataFromObject:mimeType.
  Custom serializers can be registered with RKMIMETypeSerialization using RKMIMETYpeSerialization:registerClass:formMIMEType.
  */
 @property (nonatomic) Class <RKSerialization> requestSerializerClass;
@@ -132,7 +132,8 @@
  @param request A NSURLRequest object that represents the request being made
  @param completionHandler A callback block on completion of the request. Block parameters represent the unserialized response object, the NSURLResponse and any associated error
  */
-- (NSURLSessionDataTask*)performRequest:(NSURLRequest *)request completionHandler:(void (^)(id responseObject, NSData *responseData, NSURLResponse *response, NSError *error))completionHandler;
+- (NSURLSessionDataTask*)performRequest:(NSURLRequest *)request
+                      completionHandler:(void (^)(id responseObject, NSData *responseData, NSURLResponse *response, NSError *error))completionHandler;
 
 @end
 
@@ -140,7 +141,5 @@
 @interface RKHTTPClient : NSObject <RKHTTPClient>
 
 @property (strong, nonatomic, readonly) NSURLSession *session;
-
-- (NSURLSessionDataTask*)performRequest:(NSURLRequest *)request completionHandler:(void (^)(id responseObject, NSData *responseData, NSURLResponse *response, NSError *error))completionHandler;
 
 @end

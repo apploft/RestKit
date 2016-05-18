@@ -102,6 +102,13 @@ NSIndexSet *RKStatusCodeIndexSetForClass(RKStatusCodeClass statusCodeClass);
 NSIndexSet *RKCacheableStatusCodes(void);
 
 /**
+ Creates and returns a human readable description of an index set of status codes.
+ 
+ @return A human readable description of an index set of status codes.
+ */
+NSString * RKDescriptionStringFromIndexSet(NSIndexSet *indexSet);
+
+/**
  Returns string representation of a given HTTP status code.
  
  The list of supported status codes was built from http://en.wikipedia.org/wiki/List_of_HTTP_status_codes

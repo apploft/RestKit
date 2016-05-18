@@ -12,6 +12,9 @@
 #import "RKHTTPJSONResponseSerializer.h"
 #import "RKHTTPPropertyListResponseSerializer.h"
 #import "RKMIMETypeSerialization.h"
+#import "RKLog.h"
+#import "RKErrors.h"
+#import "RKHTTPUtilities.h"
 
 @interface RKHTTPClient ()
 
@@ -184,9 +187,10 @@ defaultHeaders = _defaultHeaders;
     return [components URL];
 }
 
-- (NSURLSessionDataTask*)performRequest:(NSURLRequest *)request completionHandler:(void (^)(id responseObject, NSData *responseData, NSURLResponse *response, NSError *error))completionHandler{
+- (NSURLSessionDataTask*)performRequest:(NSURLRequest *)request
+                      completionHandler:(void (^)(id responseObject, NSData *responseData, NSURLResponse *response, NSError *error))completionHandler{
     
-    NSURLSession *session = [NSURLSession sharedSession];
+    NSURLSession *session = (self.sessionConfiguration ? [NSURLSession sessionWithConfiguration:self.sessionConfiguration] : [NSURLSession sharedSession]);
     
     NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         
@@ -200,10 +204,19 @@ defaultHeaders = _defaultHeaders;
         }
         
         id responseObject;
-        if(self.responseSerializerClass){
-            responseObject = [self.responseSerializerClass objectFromData:data error:&error];
-        }else if (response.MIMEType) {
-            responseObject = [RKMIMETypeSerialization objectFromData:data MIMEType:response.MIMEType error:&error];
+        if(data.length) {
+            if(self.responseSerializerClass){
+                responseObject = [self.responseSerializerClass objectFromData:data error:&error];
+            }else if (response.MIMEType) {
+                responseObject = [RKMIMETypeSerialization objectFromData:data MIMEType:response.MIMEType error:&error];
+            }
+            
+            if(!responseObject) {
+                RKLogWarning(@"Unable to serialise data with error %@", error);
+                responseObject = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+                
+                if(responseObject) error = nil;
+            }
         }
         
         completionHandler(responseObject, data, response, error);

@@ -71,16 +71,6 @@
     return [RKResponseDescriptor responseDescriptorWithMapping:errorMapping method:RKRequestMethodAny pathPattern:nil keyPath:@"errors" statusCodes:errorCodes];
 }
 
-- (void)testThatObjectRequestOperationResultsInRefreshedPropertiesAfterMapping
-{
-
-}
-
-- (void)testCancellationOfObjectRequestOperationCancelsMapping
-{
-
-}
-
 - (void)testShouldReturnSuccessWhenTheStatusCodeIs200AndTheResponseBodyOnlyContainsWhitespaceCharacters
 {
     RKTestComplexUser *user = [RKTestComplexUser new];
@@ -559,11 +549,12 @@
     
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"/XML/channels.xml" relativeToURL:[RKTestFactory baseURL]]];
     RKObjectRequestOperation *requestOperation = [[RKObjectRequestOperation alloc] initWithRequest:request responseDescriptors:@[ responseDescriptor ]];
+    requestOperation.HTTPRequestOperation.acceptableContentTypes = [NSSet setWithObject:@"application/json"];
     [requestOperation start];
     expect([requestOperation isFinished]).will.beTruthy();
     
     expect(requestOperation.error).notTo.beNil();
-    expect([requestOperation.error localizedDescription]).to.equal(@"Expected content type {(\n    \"application/json\",\n    \"application/x-www-form-urlencoded\"\n)}, got application/xml");
+    expect([requestOperation.error localizedDescription]).to.equal(@"Expected content type {(\n    \"application/json\"\n)}, got application/xml");
 }
 
 - (void)testThatLoadingAnUnexpectedStatusCodeReturnsCorrectErrorMessage

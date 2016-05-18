@@ -160,14 +160,7 @@
 - (void)testInitializationWithBaseURLSetsDefaultAcceptHeaderValueToJSON
 {
     RKObjectManager *manager = [RKObjectManager managerWithBaseURL:[NSURL URLWithString:@"http://restkit.org"]];
-    expect([manager defaultHeaders][@"Accept"]).to.equal(RKMIMETypeJSON);
-}
-
-- (void)testInitializationWithBaseURLSetsRequestSerializationMIMETypeToFormURLEncoded
-{
-    RKObjectManager *manager = [RKObjectManager managerWithBaseURL:[NSURL URLWithString:@"http://restkit.org"]];
-    expect(manager.HTTPClient.requestSerializerClass).to.equal([RKMIMETypeFormURLEncoded class]);
-    //    expect(manager.requestSerializationMIMEType).to.equal(RKMIMETypeFormURLEncoded);
+    expect([manager defaultHeaders][@"Accept"]).to.equal(@[ RKMIMETypeJSON ]);
 }
 
 - (void)testInitializationWithRKHTTPClientSetsNilAcceptHeaderValue
@@ -175,36 +168,40 @@
     RKHTTPClient *client = [RKHTTPClient clientWithBaseURL:[NSURL URLWithString:@"http://restkit.org"]];
     [client setDefaultHeader:@"Accept" value:@"this/that"];
     RKObjectManager *manager = [[RKObjectManager alloc] initWithHTTPClient:client];
-    expect([manager defaultHeaders][@"Accept"]).to.equal(@"this/that");
+    expect([manager defaultHeaders][@"Accept"]).to.equal(@[ @"this/that" ]);
 }
 
 - (void)testDefersToRKHTTPClientParameterEncodingWhenInitializedWithRKHTTPClient
 {
     RKHTTPClient *client = [RKHTTPClient clientWithBaseURL:[NSURL URLWithString:@"http://restkit.org"]];
-    //    client.parameterEncoding = RKJSONParameterEncoding; // FIXME PTC 20150625 parameter encoding not longer appliable - is this test then applicable?
+    client.requestSerializerClass = [RKHTTPJSONRequestSerializer class];
     RKObjectManager *manager = [[RKObjectManager alloc] initWithHTTPClient:client];
-    expect(manager.HTTPClient.requestSerializerClass).to.equal([RKMIMETypeFormURLEncoded class]);
-    //    expect([manager requestSerializationMIMEType]).to.equal(RKMIMETypeJSON);
+    expect(manager.HTTPClient.requestSerializerClass).to.equal([RKHTTPJSONRequestSerializer class]);
 }
 
-- (void)testDefaultsToFormURLEncodingForUnsupportedParameterEncodings
+- (void)testDefaultsToMIMETypeRequestSerialzationOnNoSpecification
+{
+    RKObjectManager *manager = [RKObjectManager managerWithBaseURL:[NSURL URLWithString:@"http://restkit.org"]];
+    expect(manager.HTTPClient.requestSerializerClass).to.beNil;
+}
+
+- (void)testDefaultsToMIMETypeRequestSerialzationOnNoSpecificationWhenInitializedWithRKHTTPClient
 {
     RKHTTPClient *client = [RKHTTPClient clientWithBaseURL:[NSURL URLWithString:@"http://restkit.org"]];
-    //    client.parameterEncoding = RKPropertyListParameterEncoding; // FIXME PTC 20150625 parameter encoding not longer appliable - is this test then applicable?
     RKObjectManager *manager = [[RKObjectManager alloc] initWithHTTPClient:client];
-    expect(manager.HTTPClient.requestSerializerClass).to.equal([RKMIMETypeFormURLEncoded class]);
-    //    expect([manager requestSerializationMIMEType]).to.equal(RKMIMETypeFormURLEncoded);
+    expect(manager.HTTPClient.requestSerializerClass).to.beNil;
 }
 
 - (void)testShouldUpdateACoreDataBackedTargetObject
 {
-    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] persistentStoreManagedObjectContext];
+    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] mainQueueManagedObjectContext];
     RKHuman *temporaryHuman = [RKTestFactory insertManagedObjectForEntityForName:@"Human" inManagedObjectContext:managedObjectContext withProperties:nil];
     temporaryHuman.name = @"My Name";
     
     RKManagedObjectRequestOperation *operation = [_objectManager appropriateObjectRequestOperationWithObject:temporaryHuman method:RKRequestMethodPOST path:nil parameters:nil];
     [operation start];
-    [operation waitUntilFinished];
+    
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
     
     expect(operation.mappingResult).notTo.beNil();
     expect([operation.mappingResult array]).notTo.beEmpty();
@@ -215,7 +212,7 @@
 
 - (void)testShouldNotPersistTemporaryEntityToPersistentStoreOnError
 {
-    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] persistentStoreManagedObjectContext];
+    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] mainQueueManagedObjectContext];
     RKHuman *temporaryHuman = [RKTestFactory insertManagedObjectForEntityForName:@"Human" inManagedObjectContext:managedObjectContext withProperties:nil];
     temporaryHuman.name = @"My Name";
     RKObjectMapping *mapping = [RKObjectMapping mappingForClass:[NSMutableDictionary class]];
@@ -223,14 +220,15 @@
     
     RKManagedObjectRequestOperation *operation = [_objectManager appropriateObjectRequestOperationWithObject:temporaryHuman method:RKRequestMethodPOST path:@"/humans/fail" parameters:nil];
     [operation start];
-    [operation waitUntilFinished];
+    
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
     
     expect([temporaryHuman isNew]).to.equal(YES);
 }
 
 - (void)testThatFailedObjectRequestOperationDoesNotSaveObjectToPersistentStore
 {
-    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] persistentStoreManagedObjectContext];
+    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] mainQueueManagedObjectContext];
     RKHuman *temporaryHuman = [RKTestFactory insertManagedObjectForEntityForName:@"Human" inManagedObjectContext:managedObjectContext withProperties:nil];
     temporaryHuman.name = @"My Name";
     RKObjectMapping *mapping = [RKObjectMapping mappingForClass:[NSMutableDictionary class]];
@@ -240,14 +238,15 @@
     
     RKManagedObjectRequestOperation *operation = [self.objectManager appropriateObjectRequestOperationWithObject:temporaryHuman method:RKRequestMethodPOST path:@"/humans/fail" parameters:nil];
     [operation start];
-    [operation waitUntilFinished];
+    
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
     
     expect([temporaryHuman isNew]).to.equal(YES);
 }
 
 - (void)testShouldDeleteACoreDataBackedTargetObjectOnSuccessfulDeleteReturning200
 {
-    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] persistentStoreManagedObjectContext];
+    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] mainQueueManagedObjectContext];
     RKHuman *temporaryHuman = [RKTestFactory insertManagedObjectForEntityForName:@"Human" inManagedObjectContext:managedObjectContext withProperties:nil];
     temporaryHuman.name = @"My Name";
     temporaryHuman.railsID = @1;
@@ -255,22 +254,23 @@
     [mapping addAttributeMappingsFromArray:@[@"name"]];
     
     // Save it to ensure the object is persisted before we delete it
-    [self.objectManager.managedObjectStore.persistentStoreManagedObjectContext save:nil];
+    [self.objectManager.managedObjectStore.mainQueueManagedObjectContext save:nil];
     
     RKManagedObjectRequestOperation *operation = [self.objectManager appropriateObjectRequestOperationWithObject:temporaryHuman method:RKRequestMethodDELETE path:nil parameters:nil];
     [operation start];
-    [operation waitUntilFinished];
+    
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
     
     NSError *error = nil;
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Human"];
-    NSArray *humans = [_objectManager.managedObjectStore.persistentStoreManagedObjectContext executeFetchRequest:fetchRequest error:&error];
+    NSArray *humans = [_objectManager.managedObjectStore.mainQueueManagedObjectContext executeFetchRequest:fetchRequest error:&error];
     expect(error).to.beNil();
     expect(humans).to.haveCountOf(0);
 }
 
 - (void)testShouldDeleteACoreDataBackedTargetObjectOnSuccessfulDeleteReturning204
 {
-    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] persistentStoreManagedObjectContext];
+    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] mainQueueManagedObjectContext];
     RKHuman *temporaryHuman = [RKTestFactory insertManagedObjectForEntityForName:@"Human" inManagedObjectContext:managedObjectContext withProperties:nil];
     temporaryHuman.name = @"My Name";
     temporaryHuman.railsID = @204;
@@ -278,15 +278,16 @@
     [mapping addAttributeMappingsFromArray:@[@"name"]];
     
     // Save it to ensure the object is persisted before we delete it
-    [self.objectManager.managedObjectStore.persistentStoreManagedObjectContext save:nil];
+    [self.objectManager.managedObjectStore.mainQueueManagedObjectContext save:nil];
     
     RKManagedObjectRequestOperation *operation = [self.objectManager appropriateObjectRequestOperationWithObject:temporaryHuman method:RKRequestMethodDELETE path:nil parameters:nil];
     [operation start];
-    [operation waitUntilFinished];
+    
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
     
     NSError *error = nil;
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Human"];
-    NSArray *humans = [_objectManager.managedObjectStore.persistentStoreManagedObjectContext executeFetchRequest:fetchRequest error:&error];
+    NSArray *humans = [_objectManager.managedObjectStore.mainQueueManagedObjectContext executeFetchRequest:fetchRequest error:&error];
     expect(error).to.beNil();
     expect(humans).to.haveCountOf(0);
 }
@@ -425,7 +426,7 @@
 
 - (void)testShouldProperlyFireABatchOfOperations
 {
-    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] persistentStoreManagedObjectContext];
+    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] mainQueueManagedObjectContext];
     RKHuman *temporaryHuman = [RKTestFactory insertManagedObjectForEntityForName:@"Human" inManagedObjectContext:managedObjectContext withProperties:nil];
     temporaryHuman.name = @"My Name";
     
@@ -441,7 +442,8 @@
         completionBlockOperationCount = operations.count;
     }];
     expect(_objectManager.operationQueue).notTo.beNil();
-    [_objectManager.operationQueue waitUntilAllOperationsAreFinished];
+
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
     
     dispatch_async(dispatch_get_main_queue(), ^{
         expect(progressCallbackCount).to.equal(3);
@@ -451,7 +453,7 @@
 
 - (void)testShouldProperlyFireABatchOfOperationsFromRoute
 {
-    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] persistentStoreManagedObjectContext];
+    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] mainQueueManagedObjectContext];
     RKHuman *dan = [RKTestFactory insertManagedObjectForEntityForName:@"Human" inManagedObjectContext:managedObjectContext withProperties:nil];
     dan.name = @"Dan";
     
@@ -469,7 +471,8 @@
         completionBlockOperationCount = operations.count;
     }];
     expect(_objectManager.operationQueue).notTo.beNil();
-    [_objectManager.operationQueue waitUntilAllOperationsAreFinished];
+    
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
     
     dispatch_async(dispatch_get_main_queue(), ^{
         expect(progressCallbackCount).to.equal(3);
@@ -503,7 +506,7 @@
     expect(request.HTTPMethod).to.equal(@"PATCH");
     expect(request.HTTPBody).notTo.beNil();
     NSString *string = [[NSString alloc] initWithData:request.HTTPBody encoding:NSUTF8StringEncoding];
-    expect(string).to.equal(@"human[name]&key=value");
+    expect(string).to.equal(@"{\"human\":{\"name\":null},\"key\":\"value\"}");
 }
 
 - (void)testRKHTTPClientCanModifyRequestsBuiltByObjectManager
@@ -607,7 +610,6 @@
     RKRequestDescriptor *requestDesriptor2 = [RKRequestDescriptor requestDescriptorWithMapping:mapping2 objectClass:[RKSubclassedTestModel class] rootKeyPath:@"subclassed" method:RKRequestMethodAny];
     RKObjectManager *objectManager = [RKTestFactory objectManager];
     objectManager.HTTPClient.requestSerializer = [RKHTTPJSONRequestSerializer new];
-    //    objectManager.requestSerializationMIMEType = RKMIMETypeJSON; // FIXME PTC 20150625 review this change, default should be JSON?
     [objectManager addRequestDescriptor:requestDesriptor1];
     [objectManager addRequestDescriptor:requestDesriptor2];
     
@@ -752,7 +754,6 @@
     
     RKObjectManager *objectManager = [RKTestFactory objectManager];
     objectManager.HTTPClient.requestSerializer = [RKHTTPJSONRequestSerializer new];
-    //    objectManager.requestSerializationMIMEType = RKMIMETypeJSON; // FIXME PTC 20150625 review this change, default should be JSON?
     
     NSURLRequest *request = [objectManager requestWithObject:user method:RKRequestMethodPOST path:@"/path" parameters:@{ @"this": @"that" }];
     id body = [NSJSONSerialization JSONObjectWithData:request.HTTPBody options:0 error:nil];
@@ -780,7 +781,6 @@
     
     RKObjectManager *objectManager = [RKTestFactory objectManager];
     objectManager.HTTPClient.requestSerializer = [RKHTTPJSONRequestSerializer new];
-    //    objectManager.requestSerializationMIMEType = RKMIMETypeJSON; // FIXME PTC 20150625 review this change, default should be JSON?
     [objectManager addRequestDescriptor:firstRequestDescriptor];
     [objectManager addRequestDescriptor:secondRequestDescriptor];
     
@@ -811,7 +811,6 @@
     
     RKObjectManager *objectManager = [RKTestFactory objectManager];
     objectManager.HTTPClient.requestSerializer = [RKHTTPJSONRequestSerializer new];
-    //    objectManager.requestSerializationMIMEType = RKMIMETypeJSON; // FIXME PTC 20150625 review this change, default should be JSON?
     [objectManager addRequestDescriptor:firstRequestDescriptor];
     [objectManager addRequestDescriptor:secondRequestDescriptor];
     
@@ -842,7 +841,6 @@
     
     RKObjectManager *objectManager = [RKTestFactory objectManager];
     objectManager.HTTPClient.requestSerializer = [RKHTTPJSONRequestSerializer new];
-    //    objectManager.requestSerializationMIMEType = RKMIMETypeJSON; // FIXME PTC 20150625 review this change, default should be JSON?
     [objectManager addRequestDescriptor:firstRequestDescriptor];
     [objectManager addRequestDescriptor:secondRequestDescriptor];
     
@@ -873,7 +871,6 @@
     
     RKObjectManager *objectManager = [RKTestFactory objectManager];
     objectManager.HTTPClient.requestSerializer = [RKHTTPJSONRequestSerializer new];
-    //    objectManager.requestSerializationMIMEType = RKMIMETypeJSON; // FIXME PTC 20150625 review this change, default should be JSON?
     [objectManager addRequestDescriptor:firstRequestDescriptor];
     [objectManager addRequestDescriptor:secondRequestDescriptor];
     
@@ -897,7 +894,6 @@
     
     RKObjectManager *objectManager = [RKTestFactory objectManager];
     objectManager.HTTPClient.requestSerializer = [RKHTTPJSONRequestSerializer new];
-    //    objectManager.requestSerializationMIMEType = RKMIMETypeJSON; // FIXME PTC 20150625 review this change, default should be JSON?
     [objectManager addRequestDescriptor:firstRequestDescriptor];
     
     NSArray *arrayOfObjects = @[ user ];
@@ -919,7 +915,6 @@
     
     RKObjectManager *objectManager = [RKTestFactory objectManager];
     objectManager.HTTPClient.requestSerializer = [RKHTTPJSONRequestSerializer new];
-    //    objectManager.requestSerializationMIMEType = RKMIMETypeJSON; // FIXME PTC 20150625 review this change, default should be JSON?
     [objectManager addRequestDescriptor:firstRequestDescriptor];
     [objectManager addRequestDescriptor:secondRequestDescriptor];
     
@@ -949,7 +944,6 @@
     
     RKObjectManager *objectManager = [RKTestFactory objectManager];
     objectManager.HTTPClient.requestSerializer = [RKHTTPJSONRequestSerializer new];
-    //    objectManager.requestSerializationMIMEType = RKMIMETypeJSON; // FIXME PTC 20150625 review this change, default should be JSON?
     [objectManager addRequestDescriptor:firstRequestDescriptor];
     [objectManager addRequestDescriptor:secondRequestDescriptor];
     
@@ -986,7 +980,6 @@
     
     RKObjectManager *objectManager = [RKTestFactory objectManager];
     objectManager.HTTPClient.requestSerializer = [RKHTTPJSONRequestSerializer new];
-    //    objectManager.requestSerializationMIMEType = RKMIMETypeJSON; // FIXME PTC 20150625 review this change, default should be JSON?
     [objectManager addRequestDescriptor:firstRequestDescriptor];
     [objectManager addRequestDescriptor:secondRequestDescriptor];
     
@@ -1496,7 +1489,8 @@
 
 - (void)testRoutingMetadataWithAppropriateObjectRequestOperation
 {
-    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] persistentStoreManagedObjectContext];
+    NSManagedObjectContext *managedObjectContext = [[RKTestFactory managedObjectStore] mainQueueManagedObjectContext];
+    
     RKHuman *temporaryHuman = [RKTestFactory insertManagedObjectForEntityForName:@"Human" inManagedObjectContext:managedObjectContext withProperties:nil];
     temporaryHuman.name = @"My Name";
     temporaryHuman.railsID = @(12345);
@@ -1584,14 +1578,17 @@
 
 - (void)testShouldPropagateDeletionsUpToPersistentStore
 {
-    RKHuman *temporaryHuman = [RKTestFactory insertManagedObjectForEntityForName:@"Human" inManagedObjectContext:[RKTestFactory managedObjectStore].persistentStoreManagedObjectContext withProperties:nil];
-    temporaryHuman.name = @"My Name";
-    temporaryHuman.railsID = @1;
-    RKObjectMapping *mapping = [RKObjectMapping mappingForClass:[NSMutableDictionary class]];
-    [mapping addAttributeMappingsFromArray:@[@"name"]];
-    
-    // Save it to ensure the object is persisted before we delete it
-    [[RKTestFactory managedObjectStore].persistentStoreManagedObjectContext save:nil];
+    __block RKHuman *temporaryHuman;
+    [[RKTestFactory managedObjectStore].persistentStoreManagedObjectContext performBlockAndWait:^{
+        temporaryHuman = [RKTestFactory insertManagedObjectForEntityForName:@"Human" inManagedObjectContext:[RKTestFactory managedObjectStore].persistentStoreManagedObjectContext withProperties:nil];
+        temporaryHuman.name = @"My Name";
+        temporaryHuman.railsID = @1;
+        RKObjectMapping *mapping = [RKObjectMapping mappingForClass:[NSMutableDictionary class]];
+        [mapping addAttributeMappingsFromArray:@[@"name"]];
+        
+        // Save it to ensure the object is persisted before we delete it
+        [[RKTestFactory managedObjectStore].persistentStoreManagedObjectContext save:nil];
+    }];
     
     RKHuman *persistedHuman = (RKHuman *)[[RKTestFactory managedObjectStore].mainQueueManagedObjectContext objectWithID:temporaryHuman.objectID];
     expect(persistedHuman).toNot.beNil();
@@ -1603,11 +1600,13 @@
     [operation start];
     expect([operation isFinished]).will.beTruthy();
     
-    NSError *error = nil;
-    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Human"];
-    NSArray *humans = [[RKTestFactory managedObjectStore].persistentStoreManagedObjectContext executeFetchRequest:fetchRequest error:&error];
-    expect(error).to.beNil();
-    expect(humans).to.haveCountOf(0);
+    [[RKTestFactory managedObjectStore].persistentStoreManagedObjectContext performBlockAndWait:^{
+        NSError *error = nil;
+        NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"Human"];
+        NSArray *humans = [[RKTestFactory managedObjectStore].persistentStoreManagedObjectContext executeFetchRequest:fetchRequest error:&error];
+        expect(error).to.beNil();
+        expect(humans).to.haveCountOf(0);
+    }];
 }
 
 - (void)testPostingAnObjectAndGettingBackOtherObjectsCanConnectRelationsById
@@ -1654,7 +1653,6 @@
     RKResponseDescriptor *responseDescriptor2 = [RKResponseDescriptor responseDescriptorWithMapping:mapping2 method:RKRequestMethodGET pathPattern:@"/user" keyPath:nil statusCodes:RKStatusCodeIndexSetForClass(RKStatusCodeClassSuccessful)];
     RKObjectManager *objectManager = [RKTestFactory objectManager];
     objectManager.HTTPClient.requestSerializer = [RKHTTPJSONRequestSerializer new];
-    //    objectManager.requestSerializationMIMEType = RKMIMETypeJSON; // FIXME PTC 20150625 review this change, default should be JSON?
     [objectManager addResponseDescriptorsFromArray:@[responseDescriptor1, responseDescriptor2]];
     
     __block RKTestUser *human;
@@ -1678,7 +1676,6 @@
     RKRequestDescriptor *requestDesriptor2 = [RKRequestDescriptor requestDescriptorWithMapping:mapping2 objectClass:[RKObjectMapperTestModel class] rootKeyPath:nil method:RKRequestMethodPOST];
     RKObjectManager *objectManager = [RKTestFactory objectManager];
     objectManager.HTTPClient.requestSerializer = [RKHTTPJSONRequestSerializer new];
-    //    objectManager.requestSerializationMIMEType = RKMIMETypeJSON; // FIXME PTC 20150625 review this change, default should be JSON?
     [objectManager addRequestDescriptor:requestDesriptor1];
     [objectManager addRequestDescriptor:requestDesriptor2];
     
@@ -1701,7 +1698,6 @@
     RKResponseDescriptor *responseDescriptor1 = [RKResponseDescriptor responseDescriptorWithMapping:mapping1 method:RKRequestMethodAny pathPattern:@"/user" keyPath:nil statusCodes:RKStatusCodeIndexSetForClass(RKStatusCodeClassSuccessful)];
     RKObjectManager *objectManager = [RKTestFactory objectManager];
     objectManager.HTTPClient.requestSerializer = [RKHTTPJSONRequestSerializer new];
-    //    objectManager.requestSerializationMIMEType = RKMIMETypeJSON; // FIXME PTC 20150625 review this change, default should be JSON?
     [objectManager addResponseDescriptorsFromArray:@[responseDescriptor1, responseDescriptor2]];
     
     __block RKTestUser *human;

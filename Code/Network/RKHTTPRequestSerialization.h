@@ -1,5 +1,5 @@
 //
-//  RKHTTPRequestSerializer.h
+//  RKHTTPRequestSerialization.h
 //  RestKit
 //
 //  Created by Oli on 12/04/2015.

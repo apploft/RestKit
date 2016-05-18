@@ -24,11 +24,11 @@
     self.objectRepresentation = [RKTestFixture parsedObjectWithContentsOfFixture:@"user.json"];
     RKObjectMapping *mapping = [RKObjectMapping mappingForClass:[RKTestUser class]];
     [mapping addAttributeMappingsFromDictionary:@{
-     @"id":         @"userID",
-     @"name":       @"name",
-     @"birthdate":  @"birthDate",
-     @"created_at": @"createdAt"
-     }];
+                                                  @"id":         @"userID",
+                                                  @"name":       @"name",
+                                                  @"birthdate":  @"birthDate",
+                                                  @"created_at": @"createdAt"
+                                                  }];
     RKObjectMapping *addressMapping = [RKObjectMapping mappingForClass:[RKTestAddress class]];
     [addressMapping addAttributeMappingsFromDictionary:@{ @"id": @"addressID"}];
     [addressMapping addAttributeMappingsFromArray:@[ @"city", @"state", @"country" ]];
@@ -97,8 +97,8 @@
 {
     NSError *error = nil;
     BOOL success = [self.mappingTest evaluateExpectation:[RKPropertyMappingTestExpectation expectationWithSourceKeyPath:@"nonexistant"
-                                                                                          destinationKeyPath:@"name"
-                                                                                                       value:@"Invalid"] error:&error];
+                                                                                                     destinationKeyPath:@"name"
+                                                                                                                  value:@"Invalid"] error:&error];
     expect(success).to.equal(NO);
     expect(error).notTo.beNil();
     expect(error.code).to.equal(RKMappingTestUnsatisfiedExpectationError);
@@ -177,10 +177,10 @@
     self.managedObjectStore = [RKTestFactory managedObjectStore];
     self.entityMapping = [RKEntityMapping mappingForEntityForName:@"Human" inManagedObjectStore:self.managedObjectStore];
     [self.entityMapping addAttributeMappingsFromDictionary:@{
-     @"name":               @"name",
-     @"age":                @"age",
-     @"favorite_cat_id":    @"favoriteCatID"
-     }];   
+                                                             @"name":               @"name",
+                                                             @"age":                @"age",
+                                                             @"favorite_cat_id":    @"favoriteCatID"
+                                                             }];
     self.mappingTest = [[RKMappingTest alloc] initWithMapping:self.entityMapping sourceObject:self.objectRepresentation destinationObject:nil];
     self.mappingTest.rootKeyPath = @"human";
     RKFetchRequestManagedObjectCache *managedObjectCache = [RKFetchRequestManagedObjectCache new];
@@ -190,9 +190,11 @@
     self.mappingTest.managedObjectContext = self.managedObjectStore.persistentStoreManagedObjectContext;
     self.mappingTest.managedObjectCache = managedObjectCache;
     
-    self.asia = [NSEntityDescription insertNewObjectForEntityForName:@"Cat" inManagedObjectContext:self.mappingTest.managedObjectContext];
-    self.asia.name = @"Asia";
-    self.asia.railsID = @(1234);
+    [self.mappingTest.managedObjectContext performBlockAndWait:^{
+        self.asia = [NSEntityDescription insertNewObjectForEntityForName:@"Cat" inManagedObjectContext:self.mappingTest.managedObjectContext];
+        self.asia.name = @"Asia";
+        self.asia.railsID = @(1234);
+    }];
 }
 
 - (void)tearDown
@@ -205,39 +207,52 @@
     [self.mappingTest addExpectation:[RKPropertyMappingTestExpectation expectationWithSourceKeyPath:@"name"
                                                                                  destinationKeyPath:@"name"
                                                                                               value:@"Blake Watters"]];
-    expect([self.mappingTest evaluate]).to.equal(YES);
+    [self.mappingTest.managedObjectContext performBlockAndWait:^{
+        expect([self.mappingTest evaluate]).to.equal(YES);
+    }];
 }
 
 - (void)testMappingTestForCoreDataRelationship
 {
-    RKEntityMapping *catMapping = [RKEntityMapping mappingForEntityForName:@"Cat" inManagedObjectStore:self.managedObjectStore];
-    catMapping.identificationAttributes = @[ @"name" ];
-    [catMapping addAttributeMappingsFromDictionary:@{ @"id": @"railsID" }];
-    [catMapping addAttributeMappingsFromArray:@[ @"name" ]];
-    [self.entityMapping addPropertyMapping:[RKRelationshipMapping relationshipMappingFromKeyPath:@"favorite_cat" toKeyPath:@"favoriteCat" withMapping:catMapping]];
-    [self.mappingTest addExpectation:[RKPropertyMappingTestExpectation expectationWithSourceKeyPath:@"favorite_cat"
-                                                                                 destinationKeyPath:@"favoriteCat"
-                                                                                              value:self.asia]];
-    expect([self.mappingTest evaluate]).to.equal(YES);
+    [self.mappingTest.managedObjectContext performBlockAndWait:^{
+        RKEntityMapping *catMapping = [RKEntityMapping mappingForEntityForName:@"Cat" inManagedObjectStore:self.managedObjectStore];
+        catMapping.identificationAttributes = @[ @"name" ];
+        [catMapping addAttributeMappingsFromDictionary:@{ @"id": @"railsID" }];
+        [catMapping addAttributeMappingsFromArray:@[ @"name" ]];
+        [self.entityMapping addPropertyMapping:[RKRelationshipMapping relationshipMappingFromKeyPath:@"favorite_cat" toKeyPath:@"favoriteCat" withMapping:catMapping]];
+        [self.mappingTest addExpectation:[RKPropertyMappingTestExpectation expectationWithSourceKeyPath:@"favorite_cat"
+                                                                                     destinationKeyPath:@"favoriteCat"
+                                                                                                  value:self.asia]];
+        expect([self.mappingTest evaluate]).to.equal(YES);
+    }];
 }
 
 - (void)testMappingTestForCoreDataRelationshipFromNilSourceKeyPath
 {
-    RKEntityMapping *catMapping = [RKEntityMapping mappingForEntityForName:@"Cat" inManagedObjectStore:self.managedObjectStore];
-    catMapping.identificationAttributes = @[ @"name" ];
-    [catMapping addAttributeMappingsFromDictionary:@{ @"id": @"railsID" }];
-    [catMapping addAttributeMappingsFromArray:@[ @"name" ]];
-    [self.entityMapping addPropertyMapping:[RKRelationshipMapping relationshipMappingFromKeyPath:nil toKeyPath:@"favoriteCat" withMapping:catMapping]];
-    [self.mappingTest addExpectation:[RKPropertyMappingTestExpectation expectationWithSourceKeyPath:nil
-                                                                                 destinationKeyPath:@"favoriteCat"]];
-    expect([self.mappingTest evaluate]).to.equal(YES);
+    [self.mappingTest.managedObjectContext performBlockAndWait:^{
+        RKEntityMapping *catMapping = [RKEntityMapping mappingForEntityForName:@"Cat" inManagedObjectStore:self.managedObjectStore];
+        catMapping.identificationAttributes = @[ @"name" ];
+        [catMapping addAttributeMappingsFromDictionary:@{ @"id": @"railsID" }];
+        [catMapping addAttributeMappingsFromArray:@[ @"name" ]];
+        [self.entityMapping addPropertyMapping:[RKRelationshipMapping relationshipMappingFromKeyPath:nil toKeyPath:@"favoriteCat" withMapping:catMapping]];
+        [self.mappingTest addExpectation:[RKPropertyMappingTestExpectation expectationWithSourceKeyPath:nil
+                                                                                     destinationKeyPath:@"favoriteCat"]];
+        expect([self.mappingTest evaluate]).to.equal(YES);
+    }];
 }
 
 - (void)testMappingTestForCoreDataRelationshipConnection
 {
     [self.entityMapping addConnectionForRelationship:@"favoriteCat" connectedBy:@{ @"favoriteCatID": @"railsID" }];
     [self.mappingTest addExpectation:[RKConnectionTestExpectation expectationWithRelationshipName:@"favoriteCat" attributes:@{ @"favoriteCatID": @"railsID" } value:self.asia]];
-    expect([self.mappingTest evaluate]).to.equal(YES);
+    
+    [self.mappingTest.managedObjectContext performBlockAndWait:^{
+        [self.mappingTest performMapping];
+    }];
+    
+    [((RKManagedObjectMappingOperationDataSource *)self.mappingTest.mappingOperationDataSource).operationQueue waitUntilAllOperationsAreFinished];
+    
+    expect([self.mappingTest evaluateExpectations]).to.equal(YES);
 }
 
 @end

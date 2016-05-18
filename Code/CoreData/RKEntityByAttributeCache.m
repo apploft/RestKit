@@ -275,6 +275,16 @@ static NSArray *RKCacheKeysForEntityFromAttributeValues(NSEntityDescription *ent
 {
     NSParameterAssert(objectID);
     NSParameterAssert(attributeValues);
+    for (id key in attributeValues) {
+        if ([attributeValues[key] isEqual:[NSNull null]]) {
+            for (NSString *cacheKey in self.cacheKeysToObjectIDs) {
+                NSMutableSet *objectIDs = (self.cacheKeysToObjectIDs)[cacheKey];
+                if (objectIDs && [objectIDs containsObject:objectID]) {
+                    [objectIDs removeObject:objectID];
+                }
+            }
+        }
+    }
     NSArray *cacheKeys = RKCacheKeysForEntityFromAttributeValues(self.entity, attributeValues);
     for (NSString *cacheKey in cacheKeys) {
         NSMutableSet *objectIDs = (self.cacheKeysToObjectIDs)[cacheKey];

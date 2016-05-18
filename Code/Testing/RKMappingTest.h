@@ -180,6 +180,15 @@ extern NSString * const RKMappingTestExpectationErrorKey;
  */
 @property (nonatomic, readonly) BOOL evaluate;
 
+/**
+ Evaluates the expectations and returns a Boolean value indicating if all expectations are satisfied.
+ 
+ Invocation of this method will expects `performMapping` to have been performed.
+ 
+ @return `YES` if all expectations were met, else `NO`.
+ */
+- (BOOL)evaluateExpectations;
+
 ///-------------------------
 /// @name Test Configuration
 ///-------------------------

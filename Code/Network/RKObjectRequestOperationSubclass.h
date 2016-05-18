@@ -28,6 +28,11 @@
 ///----------------------------
 
 /**
+ Invoked to tell the receiver that the object request operation is starting execution. Used to perform any necessary setup before the operation is started.
+ */
+- (void)willExecute;
+
+/**
  Performs object mapping using the `response` and `responseData` properties.
 
  The `RKObjectRequestOperation` superclass is responsible for the invocation of this method and the subsequent handling of the mapping result or error.

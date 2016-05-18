@@ -14,44 +14,44 @@
 
 @implementation RKManagedObjectSeederTest
 
-- (void)testImportingAFile
-{
-
-}
-
-- (void)testImportingADirectory
-{
-
-}
-
-- (void)testImportingDirectoryReturnsCorrectAggregateObjectCount
-{
-
-}
-
-- (void)testImportingAFileThatDoesNotExistReturnsError
-{
-
-}
-
-- (void)testImportingAFileWithAnUnsupportedMIMEType
-{
-
-}
-
-- (void)testImportingADirectoryContainingAnUnimportableFileReturnsError
-{
-
-}
-
-- (void)testImportingWithMappingErrorsReturnsAnAggregateError
-{
-
-}
-
-- (void)testFinishSeedingSavesManagedObjectContext
-{
-
-}
+//- (void)testImportingAFile
+//{
+//
+//}
+//
+//- (void)testImportingADirectory
+//{
+//
+//}
+//
+//- (void)testImportingDirectoryReturnsCorrectAggregateObjectCount
+//{
+//
+//}
+//
+//- (void)testImportingAFileThatDoesNotExistReturnsError
+//{
+//
+//}
+//
+//- (void)testImportingAFileWithAnUnsupportedMIMEType
+//{
+//
+//}
+//
+//- (void)testImportingADirectoryContainingAnUnimportableFileReturnsError
+//{
+//
+//}
+//
+//- (void)testImportingWithMappingErrorsReturnsAnAggregateError
+//{
+//
+//}
+//
+//- (void)testFinishSeedingSavesManagedObjectContext
+//{
+//
+//}
 
 @end

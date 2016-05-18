@@ -56,9 +56,27 @@ const NSMutableSet *acceptableContentTypes;
 @property (readwrite, nonatomic, strong) NSRecursiveLock *lock;
 @property (readwrite, nonatomic, strong) NSURLSessionTask *requestTask;
 
+@property (nonatomic, assign) BOOL taskFinished;
+
 @end
 
 @implementation RKHTTPRequestOperation
+
+- (void)dealloc
+{
+#if !OS_OBJECT_USE_OBJC
+    if (_failureCallbackQueue) dispatch_release(_failureCallbackQueue);
+    if (_successCallbackQueue) dispatch_release(_successCallbackQueue);
+#endif
+    _failureCallbackQueue = NULL;
+    _successCallbackQueue = NULL;
+}
+
+- (instancetype)init
+{
+    NSAssert(NO, @"Incorrect designated initialiser used for this class");
+    return [self initWithRequest:nil HTTPClient:nil];
+}
 
 - (instancetype)initWithRequest:(NSURLRequest *)urlRequest HTTPClient:(id<RKHTTPClient>)HTTPClient{
     
@@ -85,14 +103,52 @@ const NSMutableSet *acceptableContentTypes;
     return YES;
 }
 
+- (void)setSuccessCallbackQueue:(dispatch_queue_t)successCallbackQueue
+{
+    if (successCallbackQueue != _successCallbackQueue) {
+        if (_successCallbackQueue) {
+#if !OS_OBJECT_USE_OBJC
+            dispatch_release(_successCallbackQueue);
+#endif
+            _successCallbackQueue = NULL;
+        }
+        
+        if (successCallbackQueue) {
+#if !OS_OBJECT_USE_OBJC
+            dispatch_retain(successCallbackQueue);
+#endif
+            _successCallbackQueue = successCallbackQueue;
+        }
+    }
+}
+
+- (void)setFailureCallbackQueue:(dispatch_queue_t)failureCallbackQueue
+{
+    if (failureCallbackQueue != _failureCallbackQueue) {
+        if (_failureCallbackQueue) {
+#if !OS_OBJECT_USE_OBJC
+            dispatch_release(_failureCallbackQueue);
+#endif
+            _failureCallbackQueue = NULL;
+        }
+        
+        if (failureCallbackQueue) {
+#if !OS_OBJECT_USE_OBJC
+            dispatch_retain(failureCallbackQueue);
+#endif
+            _failureCallbackQueue = failureCallbackQueue;
+        }
+    }
+}
+
 #pragma mark - NSOperation
 
 - (BOOL)isReady {
     
     return  ![self isExecuting] &&
-            ![self isFinished] &&
-            ![self isCancelled] &&
-            [super isReady];
+    ![self isFinished] &&
+    ![self isCancelled] &&
+    [super isReady];
 }
 
 - (BOOL)isPaused {
@@ -104,14 +160,13 @@ const NSMutableSet *acceptableContentTypes;
 }
 
 - (BOOL)isFinished {
-    return self.requestTask && self.requestTask.state == NSURLSessionTaskStateCompleted;
-}
-
-- (BOOL)isCancelled {
-    return [super isCancelled] || [self isFinished];
+    return self.taskFinished;
 }
 
 - (BOOL)isConcurrent {
+    return YES;
+}
+- (BOOL)isAsynchronous {
     return YES;
 }
 
@@ -122,6 +177,7 @@ const NSMutableSet *acceptableContentTypes;
 
 - (void)setIsFinished:(BOOL)isFinished {
     [self willChangeValueForKey:@"isFinished"];
+    self.taskFinished = isFinished;
     [self didChangeValueForKey:@"isFinished"];
 }
 
@@ -137,19 +193,66 @@ const NSMutableSet *acceptableContentTypes;
         
         // Notify observers/queue
         self.isExecuting = YES;
-
+        
         dispatch_async(dispatch_get_main_queue(), ^{
             [[NSNotificationCenter defaultCenter] postNotificationName:RKHTTPRequestOperationDidStartNotification object:self];
         });
         
-        self.requestTask = [self.HTTPClient performRequest:self.request completionHandler:^(id responseObject, NSData *responseData, NSURLResponse *response, NSError *error) {
+        __weak typeof(self) weakSelf = self;
+        NSURLRequest *request = self.request;
+        NSIndexSet *acceptableStatusCodes = self.acceptableStatusCodes;
+        NSSet *acceptableContentTypes = self.acceptableContentTypes;
+        
+        self.requestTask = [self.HTTPClient performRequest:request completionHandler:^(id responseObject, NSData *responseData, NSURLResponse *response, NSError *error) {
             
-            self.responseData = responseData;
-            self.responseString = [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding];
-            self.responseObject = responseObject;            
-            self.response = (NSHTTPURLResponse*) response;
-            self.error = error;
-            [self finish];
+            [weakSelf.lock lock];
+            
+            if (weakSelf.isCancelled) {
+                [weakSelf.lock unlock];
+                return;
+            }
+            
+            id returnObject = responseObject;
+            NSData *returnData = responseData;
+            NSError *returnError = error;
+            
+            if(acceptableStatusCodes && [response isKindOfClass:[NSHTTPURLResponse class]] && ![acceptableStatusCodes containsIndex:((NSHTTPURLResponse *)response).statusCode]) {
+                NSInteger code = ((NSHTTPURLResponse *)response).statusCode;
+                
+                NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Expected status code in (%@), got %ld", RKDescriptionStringFromIndexSet(acceptableStatusCodes), (long)code] };
+                
+                returnError = [NSError errorWithDomain:RKErrorDomain code:code userInfo:userInfo];
+                returnObject = nil;
+                returnData = nil;
+            }
+            
+            else if(acceptableContentTypes && RKRequestMethodFromString(request.HTTPMethod) != RKRequestMethodHEAD && [response isKindOfClass:[NSHTTPURLResponse class]]) {
+                NSInteger code = ((NSHTTPURLResponse *)response).statusCode;
+                
+                if(![RKStatusCodesOfResponsesWithOptionalBodies() containsIndex:code]) {
+                    NSString *contentType = [[(NSHTTPURLResponse *)response allHeaderFields] objectForKey:@"Content-Type"];
+                    
+                    if(contentType && !RKMIMETypeInSet(contentType, acceptableContentTypes)) {
+                        NSRange endRange = [contentType rangeOfString:@";"];
+                        
+                        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Expected content type %@, got %@", acceptableContentTypes, endRange.location == NSNotFound ? contentType : [contentType substringToIndex:endRange.location]] };
+                        
+                        returnError = [NSError errorWithDomain:RKErrorDomain code:code userInfo:userInfo];
+                        returnObject = nil;
+                        returnData = nil;
+                    }
+                }
+            }
+            
+            weakSelf.responseData = returnData;
+            weakSelf.responseString = [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding];
+            weakSelf.responseObject = returnObject;
+            weakSelf.response = (NSHTTPURLResponse*) response;
+            weakSelf.error = returnError;
+            
+            [weakSelf.lock unlock];
+            
+            [weakSelf finish];
         }];
     }
     [self.lock unlock];
@@ -182,13 +285,15 @@ const NSMutableSet *acceptableContentTypes;
     [self.requestTask resume];
     
     self.isExecuting = YES;
-
+    
     [self.lock unlock];
 }
 
 
 - (void)finish {
-
+    
+    [self.lock lock];
+    
     // Notify observers/queue
     self.isExecuting = NO;
     self.isFinished = YES;
@@ -196,6 +301,7 @@ const NSMutableSet *acceptableContentTypes;
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:RKHTTPRequestOperationDidFinishNotification object:self];
     });
+    [self.lock unlock];
 }
 
 - (void)cancel {
@@ -206,6 +312,8 @@ const NSMutableSet *acceptableContentTypes;
         [self.requestTask cancel];
         
         self.isCancelled = YES;
+        self.isExecuting = NO;
+        self.isFinished = YES;
         [super cancel];
     }
     [self.lock unlock];
@@ -216,15 +324,19 @@ const NSMutableSet *acceptableContentTypes;
     
     __weak typeof(self) weakSelf = self;
     self.completionBlock = ^{
+        if (weakSelf.isCancelled) {
+            return;
+        }
+        
         if (weakSelf.error) {
             if (failure) {
-                dispatch_async(dispatch_get_main_queue(), ^{
+                dispatch_async(weakSelf.failureCallbackQueue ?: dispatch_get_main_queue(), ^{
                     failure(weakSelf, weakSelf.error);
                 });
             }
         } else {
             if (success) {
-                dispatch_async(dispatch_get_main_queue(), ^{
+                dispatch_async(weakSelf.successCallbackQueue ?: dispatch_get_main_queue(), ^{
                     success(weakSelf, weakSelf.responseData);
                 });
             }
@@ -236,7 +348,12 @@ const NSMutableSet *acceptableContentTypes;
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(NSZone *)zone {
-    return [(RKHTTPRequestOperation *)[[self class] allocWithZone:zone] initWithRequest:self.request HTTPClient:self.HTTPClient];
+    RKHTTPRequestOperation *operation = [(RKHTTPRequestOperation *)[[self class] allocWithZone:zone] initWithRequest:self.request HTTPClient:self.HTTPClient];
+    
+    operation.successCallbackQueue = self.successCallbackQueue;
+    operation.failureCallbackQueue = self.failureCallbackQueue;
+    
+    return operation;
 }
 
 @end

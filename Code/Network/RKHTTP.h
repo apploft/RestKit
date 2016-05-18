@@ -11,9 +11,3 @@ typedef enum {
     RKSSLPinningModePublicKey,
     RKSSLPinningModeCertificate,
 } RKSSLPinningMode;
-
-typedef enum {
-    RKFormURLParameterEncoding,
-    RKJSONParameterEncoding,
-    RKPropertyListParameterEncoding,
-} RKHTTPClientParameterEncoding;
