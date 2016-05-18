@@ -122,16 +122,13 @@ static NSString *RKLogTruncateString(NSString *string)
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-static void *RKParentObjectRequestOperation = &RKParentObjectRequestOperation;
 static void *RKOperationStartDate = &RKOperationStartDate;
 static void *RKOperationFinishDate = &RKOperationFinishDate;
 
 - (void)objectRequestOperationDidStart:(NSNotification *)notification
 {
-    // Weakly tag the HTTP operation with its parent object request operation
     RKObjectRequestOperation *objectRequestOperation = [notification object];
     objc_setAssociatedObject(objectRequestOperation, RKOperationStartDate, [NSDate date], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    objc_setAssociatedObject(objectRequestOperation.HTTPRequestOperation, RKParentObjectRequestOperation, objectRequestOperation, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
     NSURLRequest *request = objectRequestOperation.HTTPRequestOperation.request;
     RKLogInfo(@"%@ '%@'", request.HTTPMethod, request.URL.absoluteString);
@@ -287,13 +284,21 @@ static NSString *RKStringDescribingURLResponseWithData(NSURLResponse *response, 
     _successCallbackQueue = NULL;
 }
 
+// Compiler requires that we override this.
+- (instancetype)init
+{
+    self = [self initWithHTTPRequestOperation:nil responseDescriptors:nil];
+    NSAssert(NO, @"Failed to call designated initializer on %@.", self);
+    return self;
+}
+
 // Designated initializer
 - (instancetype)initWithHTTPRequestOperation:(RKHTTPRequestOperation *)requestOperation responseDescriptors:(NSArray *)responseDescriptors
 {
     NSParameterAssert(requestOperation);
     NSParameterAssert(responseDescriptors);
     
-    self = [self init];
+    self = [super init];
     if (self) {
         self.responseDescriptors = responseDescriptors;
         self.HTTPRequestOperation = requestOperation;
@@ -400,34 +405,34 @@ static NSString *RKStringDescribingURLResponseWithData(NSURLResponse *response, 
 - (void)setCompletionBlockWithSuccess:(void (^)(RKObjectRequestOperation *operation, RKMappingResult *mappingResult))success
                               failure:(void (^)(RKObjectRequestOperation *operation, NSError *error))failure
 {
-// See above setCompletionBlock:
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Warc-retain-cycles"
-
     //Keep blocks for copyWithZone
     self.successBlock = success;
     self.failureBlock = failure;
-
+    
+    __weak __typeof(self) const weakSelf = self;
     self.completionBlock = ^ {
-        if ([self isCancelled] && !self.error) {
-            self.error = [NSError errorWithDomain:RKErrorDomain code:RKOperationCancelledError userInfo:nil];
-        }
-
-        if (self.error) {
-            if (failure) {
-                dispatch_async(self.failureCallbackQueue ?: dispatch_get_main_queue(), ^{
-                    failure(self, self.error);
-                });
+		__typeof(self) const strongSelf = weakSelf; // Retain object, so we for sure have something to pass to the success and/or failure blocks.
+		if(strongSelf)
+        {
+            if ([strongSelf isCancelled] && !strongSelf.error) {
+                strongSelf.error = [NSError errorWithDomain:RKErrorDomain code:RKOperationCancelledError userInfo:nil];
             }
-        } else {
-            if (success) {
-                dispatch_async(self.successCallbackQueue ?: dispatch_get_main_queue(), ^{
-                    success(self, self.mappingResult);
-                });
+            
+            if (strongSelf.error) {
+                if (failure) {
+                    dispatch_async(strongSelf.failureCallbackQueue ?: dispatch_get_main_queue(), ^{
+                        failure(strongSelf, strongSelf.error);
+                    });
+                }
+            } else {
+                if (success) {
+                    dispatch_async(strongSelf.successCallbackQueue ?: dispatch_get_main_queue(), ^{
+                        success(strongSelf, strongSelf.mappingResult);
+                    });
+                }
             }
         }
     };
-#pragma clang diagnostic pop
 }
 
 - (void)performMappingOnResponseWithCompletionBlock:(void(^)(RKMappingResult *mappingResult, NSError *error))completionBlock

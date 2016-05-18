@@ -158,6 +158,14 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
 
 @implementation RKMetadataWrapper
 
+- (instancetype)init
+{
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                   reason:[NSString stringWithFormat:@"-init is not a valid initializer for the class %@, use designated initilizer -initWithMappingSource:", NSStringFromClass([self class])]
+                                 userInfo:nil];
+    return [self init];
+}
+
 - (instancetype)initWithMappingSource:(RKMappingSourceObject *)source {
     if (self = [super init]) {
         self.mappingSource = source;
@@ -317,22 +325,27 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
     /* Using firstChar as a small performance enhancement -- one check can avoid several hasPrefix calls */
     unichar firstChar = [keyPath length] > 0 ? [keyPath characterAtIndex:0] : 0;
 
-    if (firstChar == 's' && [keyPath hasPrefix:RKSelfKeyPathPrefix]) {
-        NSString *selfKeyPath = [keyPath substringFromIndex:[RKSelfKeyPathPrefix length]];
-        return [_object valueForKeyPath:selfKeyPath];
-    } else if (firstChar != '@') {
-        return [_object valueForKeyPath:keyPath];
-    } else if ([keyPath hasPrefix:RKMetadataKeyPathPrefix]) {
-        NSString *metadataKeyPath = [keyPath substringFromIndex:[RKMetadataKeyPathPrefix length]];
-        return [self metadataValueForKeyPath:metadataKeyPath];
-    } else if ([keyPath hasPrefix:RKParentKeyPathPrefix]) {
-        NSString *parentKeyPath = [keyPath substringFromIndex:[RKParentKeyPathPrefix length]];
-        return [self.parentObject valueForKeyPath:parentKeyPath];
-    } else if ([keyPath hasPrefix:RKRootKeyPathPrefix]) {
-        NSString *rootKeyPath = [keyPath substringFromIndex:[RKRootKeyPathPrefix length]];
-        return [self.rootObject valueForKeyPath:rootKeyPath];
-    } else {
-        return [_object valueForKeyPath:keyPath];
+    @try {
+        if (firstChar == 's' && [keyPath hasPrefix:RKSelfKeyPathPrefix]) {
+            NSString *selfKeyPath = [keyPath substringFromIndex:[RKSelfKeyPathPrefix length]];
+            return [_object valueForKeyPath:selfKeyPath];
+        } else if (firstChar != '@') {
+            return [_object valueForKeyPath:keyPath];
+        } else if ([keyPath hasPrefix:RKMetadataKeyPathPrefix]) {
+            NSString *metadataKeyPath = [keyPath substringFromIndex:[RKMetadataKeyPathPrefix length]];
+            return [self metadataValueForKeyPath:metadataKeyPath];
+        } else if ([keyPath hasPrefix:RKParentKeyPathPrefix]) {
+            NSString *parentKeyPath = [keyPath substringFromIndex:[RKParentKeyPathPrefix length]];
+            return [self.parentObject valueForKeyPath:parentKeyPath];
+        } else if ([keyPath hasPrefix:RKRootKeyPathPrefix]) {
+            NSString *rootKeyPath = [keyPath substringFromIndex:[RKRootKeyPathPrefix length]];
+            return [self.rootObject valueForKeyPath:rootKeyPath];
+        } else {
+            return [_object valueForKeyPath:keyPath];
+        }
+    }
+    @catch (NSException *exception) {
+        return nil;
     }
 }
 
@@ -668,9 +681,14 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
 - (BOOL)transformValue:(id)inputValue toValue:(__autoreleasing id *)outputValue withPropertyMapping:(RKPropertyMapping *)propertyMapping error:(NSError *__autoreleasing *)error
 {
     if (! inputValue) {
-        *outputValue = nil;
-        // We only want to consider the transformation successful and assign nil if the mapping calls for it
-        return propertyMapping.objectMapping.assignsDefaultValueForMissingAttributes;
+        // We only want to consider the transformation successful and assign the default if the mapping calls for it
+        if (propertyMapping.objectMapping.assignsDefaultValueForMissingAttributes) {
+            *outputValue = [propertyMapping.objectMapping defaultValueForAttribute:propertyMapping.destinationKeyPath];
+            return YES;
+        } else {
+            *outputValue = nil;
+            return NO;
+        }
     }
     Class transformedValueClass = propertyMapping.propertyValueClass ?: [self.objectMapping classForKeyPath:propertyMapping.destinationKeyPath];
     if (! transformedValueClass) {
@@ -1268,9 +1286,8 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
         }
     }
     
-    BOOL canSkipProperties = [dataSource respondsToSelector:@selector(mappingOperationShouldSkipPropertyMapping:)] && [dataSource mappingOperationShouldSkipPropertyMapping:self];
-    BOOL canSkipAttributes = canSkipProperties;
-    BOOL canSkipRelationships = canSkipProperties;
+    BOOL canSkipAttributes = [dataSource respondsToSelector:@selector(mappingOperationShouldSkipAttributeMapping:)] && [dataSource mappingOperationShouldSkipAttributeMapping:self];
+    BOOL canSkipRelationships = [dataSource respondsToSelector:@selector(mappingOperationShouldSkipRelationshipMapping:)] && [dataSource mappingOperationShouldSkipRelationshipMapping:self];
     if ([dataSource respondsToSelector:@selector(mappingOperationShouldSkipRelationshipMapping:)]) {
         canSkipRelationships = [dataSource mappingOperationShouldSkipRelationshipMapping:self];
     }

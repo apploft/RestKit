@@ -135,6 +135,7 @@ NSString * const RKMappingTestVerificationFailureException = @"RKMappingTestVeri
 @property (nonatomic, strong, readwrite) RKMapping *mapping;
 @property (nonatomic, strong, readwrite) id sourceObject;
 @property (nonatomic, strong, readwrite) id destinationObject;
+@property (nonatomic, strong) NSArray *metadataList;
 @property (nonatomic, strong) NSMutableArray *expectations;
 @property (nonatomic, strong) NSMutableArray *events;
 @property (nonatomic, assign, getter = hasPerformedMapping) BOOL performedMapping;
@@ -149,24 +150,43 @@ NSString * const RKMappingTestVerificationFailureException = @"RKMappingTestVeri
 
 + (instancetype)testForMapping:(RKMapping *)mapping sourceObject:(id)sourceObject destinationObject:(id)destinationObject
 {
+    return [[self class] testForMapping:mapping sourceObject:sourceObject destinationObject:destinationObject metadataList:nil];
+}
+
++ (instancetype)testForMapping:(RKMapping *)mapping sourceObject:(id)sourceObject destinationObject:(id)destinationObject metadataList:(NSArray *)metadataList
+{
     return [[self alloc] initWithMapping:mapping sourceObject:sourceObject destinationObject:destinationObject];
+}
+
+- (instancetype)init
+{
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                   reason:[NSString stringWithFormat:@"-init is not a valid initializer for the class %@, use designated initilizer -initWithMapping", NSStringFromClass([self class])]
+                                 userInfo:nil];
+    return [self init];
 }
 
 - (instancetype)initWithMapping:(RKMapping *)mapping sourceObject:(id)sourceObject destinationObject:(id)destinationObject
 {
+    return [self initWithMapping:mapping sourceObject:sourceObject destinationObject:destinationObject metadataList:nil];
+}
+
+- (instancetype)initWithMapping:(RKMapping *)mapping sourceObject:(id)sourceObject destinationObject:(id)destinationObject metadataList:(NSArray *)metadataList
+{
     NSAssert(sourceObject != nil, @"Cannot perform a mapping operation without a sourceObject object");
     NSAssert(mapping != nil, @"Cannot perform a mapping operation without a mapping");
-
+    
     self = [super init];
     if (self) {
         self.sourceObject = sourceObject;
         self.destinationObject = destinationObject;
+        self.metadataList = metadataList;
         self.mapping = mapping;
         self.expectations = [NSMutableArray new];
         self.events = [NSMutableArray new];
         self.performedMapping = NO;
     }
-
+    
     return self;
 }
 
@@ -382,7 +402,7 @@ NSString * const RKMappingTestVerificationFailureException = @"RKMappingTestVeri
     // Ensure repeated invocations of verify only result in a single mapping operation
     if (! self.hasPerformedMapping) {
         id sourceObject = self.rootKeyPath ? [self.sourceObject valueForKeyPath:self.rootKeyPath] : self.sourceObject;
-        RKMappingOperation *mappingOperation = [[RKMappingOperation alloc] initWithSourceObject:sourceObject destinationObject:self.destinationObject mapping:self.mapping];
+        RKMappingOperation *mappingOperation = [[RKMappingOperation alloc] initWithSourceObject:sourceObject destinationObject:self.destinationObject mapping:self.mapping metadataList:self.metadataList];
         id<RKMappingOperationDataSource> dataSource = [self dataSourceForMappingOperation:mappingOperation];
         mappingOperation.dataSource = dataSource;
         mappingOperation.delegate = self;

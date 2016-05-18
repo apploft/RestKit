@@ -112,7 +112,7 @@ enum _RKlcl_enum_level_t {
     RKlcl_vInfo,                  // informational message
     RKlcl_vDebug,                 // coarse-grained debugging information
     RKlcl_vTrace,                 // fine-grained debugging information
-    
+
    _RKlcl_level_t_count,
    _RKlcl_level_t_first = 0,
    _RKlcl_level_t_last  = _RKlcl_level_t_count-1
@@ -387,4 +387,3 @@ enum {
 
 
 #endif // __RKLCL_H__
-

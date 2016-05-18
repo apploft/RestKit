@@ -233,6 +233,27 @@
     assertThat(objects, hasCountOf(0));
 }
 
+- (void)testRetrievalOfDeletedObjectReturnsNil
+{
+    RKHuman *human = [NSEntityDescription insertNewObjectForEntityForName:@"Human" inManagedObjectContext:self.managedObjectStore.persistentStoreManagedObjectContext];
+    human.railsID = @12345;
+    [self.managedObjectStore.persistentStoreManagedObjectContext save:nil];
+    
+    __block BOOL done = NO;
+    [self.cache addObjects:[NSSet setWithObjects:human, nil] completion:^{
+        done = YES;
+    }];
+    expect(done).will.equal(YES);
+    
+    NSManagedObjectContext *childContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
+    childContext.parentContext = self.managedObjectContext;
+    
+    [childContext deleteObject:[childContext objectWithID:[human objectID]]];
+    
+    NSManagedObject *object = [self.cache objectWithAttributeValues:@{ @"railsID": @"12345" } inContext:childContext];
+    assertThat(object, is(nilValue()));
+}
+
 // Do this with 3 attributes, 2 that are arrays and 1 that is not
 // check
 // Test blowing up if you request objects without enough cache keys
@@ -400,23 +421,5 @@
 
     [self.cache objectsWithAttributeValues:attributeValues inContext:self.managedObjectContext];
 }
-
-#if TARGET_OS_IPHONE
-- (void)testCacheIsFlushedOnMemoryWarning
-{
-    RKHuman *human1 = [NSEntityDescription insertNewObjectForEntityForName:@"Human" inManagedObjectContext:self.managedObjectStore.persistentStoreManagedObjectContext];
-    human1.railsID = @12345;
-    RKHuman *human2 = [NSEntityDescription insertNewObjectForEntityForName:@"Human" inManagedObjectContext:self.managedObjectStore.persistentStoreManagedObjectContext];
-    human2.railsID = @12345;
-    [self.managedObjectStore.persistentStoreManagedObjectContext save:nil];
-    
-    [self.cache addObjects:[NSSet setWithObjects:human1, human2, nil] completion:nil];
-    expect([self.cache containsObject:human1]).will.equal(YES);
-    expect([self.cache containsObject:human2]).will.equal(YES);
-    [[NSNotificationCenter defaultCenter] postNotificationName:UIApplicationDidReceiveMemoryWarningNotification object:self];
-    expect([self.cache containsObject:human1]).will.equal(NO);
-    expect([self.cache containsObject:human2]).will.equal(NO);
-}
-#endif
 
 @end
