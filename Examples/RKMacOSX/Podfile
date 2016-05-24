@@ -3,6 +3,9 @@
 platform :osx, '10.8'
 use_frameworks!
 
-pod 'RestKit/Network', :path => '../../'
-pod 'RestKit/ObjectMapping', :path => '../../'
-pod 'RestKit/CoreData', :path => '../../'
+target 'RKMacOSX' do
+  pod 'RestKit/Network', :path => '../../'
+  pod 'RestKit/ObjectMapping', :path => '../../'
+  pod 'RestKit/CoreData', :path => '../../'
+end
+
