@@ -456,7 +456,16 @@ static NSString *RKStringDescribingURLResponseWithData(NSURLResponse *response, 
 {
     __weak __typeof(self)weakSelf = self;    
     
-    [self.HTTPRequestOperation setCompletionBlockWithSuccess:^(RKHTTPRequestOperation *operation, id responseObject) {
+    /*
+     * `RKHTTPRequestOperation` uses the main queue for its callbacks per
+     * default. This leads to a deadlock when one does [operation waitUntilFinidhes]
+     * on the main thread.
+     */
+    RKHTTPRequestOperation *requestOperation = self.HTTPRequestOperation;
+    requestOperation.successCallbackQueue = [[self class] dispatchQueue];
+    requestOperation.failureCallbackQueue = [[self class] dispatchQueue];
+    
+    [requestOperation setCompletionBlockWithSuccess:^(RKHTTPRequestOperation *operation, id responseObject) {
         if (weakSelf.isCancelled) {
             [weakSelf.stateMachine finish];
             return;
@@ -503,7 +512,7 @@ static NSString *RKStringDescribingURLResponseWithData(NSURLResponse *response, 
     }];
     
     // Send the request
-    [self.HTTPRequestOperation start];
+    [requestOperation start];
 }
 
 - (NSString *)description {
