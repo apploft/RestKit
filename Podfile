@@ -26,14 +26,12 @@ def import_pods
   pod 'RKCLLocationValueTransformer', '~> 1.1.0'
 end
 
-target :ios do
+target 'RestKitTests' do
   platform :ios, '7.0'
-  link_with 'RestKitTests'
   import_pods
 end
 
-target :osx do
+target 'RestKitFrameworkTests' do
   platform :osx, '10.8'
-  link_with 'RestKitFrameworkTests'
   import_pods
 end
