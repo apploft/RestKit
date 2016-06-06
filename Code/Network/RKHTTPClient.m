@@ -63,12 +63,21 @@ defaultHeaders = _defaultHeaders;
     self.requestSerializer = [RKHTTPRequestSerializer serializer];
     self.defaultHeaders = [NSMutableDictionary new];
     
+/***
+    TODO apploft: Add default HTTP-Header as AFNetworking does.
+***/
+    
     // HTTP Method Definitions; see http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
     self.HTTPMethodsEncodingParametersInURI = [NSSet setWithObjects:@"GET", @"HEAD", @"DELETE", nil];
     
     return self;
 }
 
+
+/****
+   TODO apploft: This seems to be an unused and also weird method
+                 no really clear what it's supposed to be.
+ ****/
 - (void)addDefaultHeader:(NSString *)header
                    value:(NSString *)value{
     
@@ -87,6 +96,9 @@ defaultHeaders = _defaultHeaders;
     }
 }
 
+/****
+ TODO apploft: Get rid of bullshit implementation.
+ ****/
 - (void)setDefaultHeader:(NSString *)header
                    value:(NSString *)value{
     
@@ -139,7 +151,15 @@ defaultHeaders = _defaultHeaders;
     //Are we parameterizing the querystring or the HTTP Body
     if([self.HTTPMethodsEncodingParametersInURI containsObject:[method uppercaseString]]){
         
+        /****
+         TODO apploft: Rework this method as it's been implemented rather naively
+         ****/
         BOOL hasQueryString     = url.query ? YES : NO;
+        
+        /****
+         TODO apploft: above RKMIMETYPEJSON will be used as default while here RKMIMIMETypeFormURLEncoded 
+         will be used unconditionally.
+         ****/
         NSData *queryStringData = [RKMIMETypeSerialization dataFromObject:parameters MIMEType:RKMIMETypeFormURLEncoded error:&error];
         NSString *queryString   = [[NSString alloc] initWithData:queryStringData encoding:NSUTF8StringEncoding];
         
@@ -148,6 +168,9 @@ defaultHeaders = _defaultHeaders;
         
         //Else encode body with serializer
     }else{
+        /****
+         TODO apploft: Use RKMIMETypeSerialization only instead of two different mechanisms.
+         ****/
         if(self.requestSerializerClass){
             request.HTTPBody = [self.requestSerializerClass dataFromObject: parameters error: &error];
         }else{
