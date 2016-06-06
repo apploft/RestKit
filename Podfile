@@ -8,7 +8,7 @@ target :RestKit do
 end
 
 target :RestKitFramework do
-  platform :osx, '10.8'
+  platform :osx, '10.9'
   podspec
 end
 
@@ -32,6 +32,6 @@ target 'RestKitTests' do
 end
 
 target 'RestKitFrameworkTests' do
-  platform :osx, '10.8'
+  platform :osx, '10.9'
   import_pods
 end
