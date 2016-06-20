@@ -19,6 +19,7 @@
 //
 
 #import "RKURLEncodedSerialization.h"
+#import "RKAFURLRequestSerialization.h"
 
 #pragma mark - AFNetworking
 
@@ -38,7 +39,7 @@ static NSString * AFPercentEscapedQueryStringValueFromStringWithEncoding(NSStrin
 
 #pragma mark -
 
-@interface RKAFQueryStringPair : NSObject
+@interface RKAFQueryStringPair_ : NSObject
 @property (readwrite, nonatomic, strong) id field;
 @property (readwrite, nonatomic, strong) id value;
 
@@ -47,7 +48,7 @@ static NSString * AFPercentEscapedQueryStringValueFromStringWithEncoding(NSStrin
 - (NSString *)URLEncodedStringValueWithEncoding:(NSStringEncoding)stringEncoding;
 @end
 
-@implementation RKAFQueryStringPair
+@implementation RKAFQueryStringPair_
 
 - (instancetype)init
 {
@@ -81,23 +82,23 @@ static NSString * AFPercentEscapedQueryStringValueFromStringWithEncoding(NSStrin
 
 #pragma mark -
 
-extern NSArray * RKAFQueryStringPairsFromDictionary(NSDictionary *dictionary);
-extern NSArray * RKAFQueryStringPairsFromKeyAndValue(NSString *key, id value);
+extern NSArray * RKAFQueryStringPairsFromDictionary_(NSDictionary *dictionary);
+extern NSArray * RKAFQueryStringPairsFromKeyAndValue_(NSString *key, id value);
 
 static NSString * RKAFQueryStringFromParametersWithEncoding(NSDictionary *parameters, NSStringEncoding stringEncoding) {
     NSMutableArray *mutablePairs = [NSMutableArray array];
-    for (RKAFQueryStringPair *pair in RKAFQueryStringPairsFromDictionary(parameters)) {
+    for (RKAFQueryStringPair_ *pair in RKAFQueryStringPairsFromDictionary_(parameters)) {
         [mutablePairs addObject:[pair URLEncodedStringValueWithEncoding:stringEncoding]];
     }
 
     return [mutablePairs componentsJoinedByString:@"&"];
 }
 
-NSArray * RKAFQueryStringPairsFromDictionary(NSDictionary *dictionary) {
-    return RKAFQueryStringPairsFromKeyAndValue(nil, dictionary);
+NSArray * RKAFQueryStringPairsFromDictionary_(NSDictionary *dictionary) {
+    return RKAFQueryStringPairsFromKeyAndValue_(nil, dictionary);
 }
 
-NSArray * RKAFQueryStringPairsFromKeyAndValue(NSString *key, id value) {
+NSArray * RKAFQueryStringPairsFromKeyAndValue_(NSString *key, id value) {
     NSMutableArray *mutableQueryStringComponents = [NSMutableArray array];
 
     NSSortDescriptor *sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"description" ascending:YES selector:@selector(compare:)];
@@ -108,21 +109,21 @@ NSArray * RKAFQueryStringPairsFromKeyAndValue(NSString *key, id value) {
         for (id nestedKey in [dictionary.allKeys sortedArrayUsingDescriptors:@[ sortDescriptor ]]) {
             id nestedValue = dictionary[nestedKey];
             if (nestedValue) {
-                [mutableQueryStringComponents addObjectsFromArray:RKAFQueryStringPairsFromKeyAndValue((key ? [NSString stringWithFormat:@"%@[%@]", key, nestedKey] : nestedKey), nestedValue)];
+                [mutableQueryStringComponents addObjectsFromArray:RKAFQueryStringPairsFromKeyAndValue_((key ? [NSString stringWithFormat:@"%@[%@]", key, nestedKey] : nestedKey), nestedValue)];
             }
         }
     } else if ([value isKindOfClass:[NSArray class]]) {
         NSArray *array = value;
         for (id nestedValue in array) {
-            [mutableQueryStringComponents addObjectsFromArray:RKAFQueryStringPairsFromKeyAndValue([NSString stringWithFormat:@"%@[]", key], nestedValue)];
+            [mutableQueryStringComponents addObjectsFromArray:RKAFQueryStringPairsFromKeyAndValue_([NSString stringWithFormat:@"%@[]", key], nestedValue)];
         }
     } else if ([value isKindOfClass:[NSSet class]]) {
         NSSet *set = value;
         for (id obj in [set sortedArrayUsingDescriptors:@[ sortDescriptor ]]) {
-            [mutableQueryStringComponents addObjectsFromArray:RKAFQueryStringPairsFromKeyAndValue(key, obj)];
+            [mutableQueryStringComponents addObjectsFromArray:RKAFQueryStringPairsFromKeyAndValue_(key, obj)];
         }
     } else {
-        [mutableQueryStringComponents addObject:[[RKAFQueryStringPair alloc] initWithField:key value:value]];
+        [mutableQueryStringComponents addObject:[[RKAFQueryStringPair_ alloc] initWithField:key value:value]];
     }
 
     return mutableQueryStringComponents;
@@ -180,7 +181,7 @@ NSString *RKURLEncodedStringFromDictionaryWithEncoding(NSDictionary *dictionary,
 // This replicates `AFPercentEscapedQueryStringPairMemberFromStringWithEncoding`. Should send PR exposing non-static version
 NSString *RKPercentEscapedQueryStringFromStringWithEncoding(NSString *string, NSStringEncoding encoding)
 {
-    // Escape characters that are legal in URIs, but have unintentional semantic significance when used in a query string parameter
+     //Escape characters that are legal in URIs, but have unintentional semantic significance when used in a query string parameter
     static NSString * const kAFLegalCharactersToBeEscaped = @":/.?&=;+!@$()~";
 
 	return (__bridge_transfer  NSString *)CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault, (__bridge CFStringRef)string, NULL, (__bridge CFStringRef)kAFLegalCharactersToBeEscaped, CFStringConvertNSStringEncodingToEncoding(encoding));

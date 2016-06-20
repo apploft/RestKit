@@ -7,8 +7,8 @@
 //
 
 #import "RKHTTPRequestSerialization.h"
-#import "AFURLRequestSerialization.h"
+#import "RKAFURLRequestSerialization.h"
 
-@interface RKHTTPPropertyListRequestSerializer : AFPropertyListRequestSerializer <RKHTTPRequestSerialization>
+@interface RKHTTPPropertyListRequestSerializer : RKAFPropertyListRequestSerializer <RKHTTPRequestSerialization>
 
 @end

@@ -7,7 +7,7 @@
 //
 
 #import "RKHTTPRequestSerialization.h"
-#import "AFURLRequestSerialization.h"
+#import "RKAFURLRequestSerialization.h"
 
 @protocol RKHTTPJSONRequestSerialization <RKHTTPRequestSerialization>
 
@@ -26,6 +26,6 @@
 @end
 
 
-@interface RKHTTPJSONRequestSerializer : AFJSONRequestSerializer <RKHTTPJSONRequestSerialization>
+@interface RKHTTPJSONRequestSerializer : RKAFJSONRequestSerializer <RKHTTPJSONRequestSerialization>
 
 @end

@@ -7,8 +7,8 @@
 //
 
 #import "RKHTTPResponseSerialization.h"
-#import "AFURLResponseSerialization.h"
+#import "RKAFURLResponseSerialization.h"
 
-@interface RKHTTPPropertyListResponseSerializer : AFPropertyListResponseSerializer <RKHTTPResponseSerialization>
+@interface RKHTTPPropertyListResponseSerializer : RKAFPropertyListResponseSerializer <RKHTTPResponseSerialization>
 
 @end

@@ -380,7 +380,7 @@ RKMappingResult, RKRequestDescriptor, RKResponseDescriptor;
                                                  method:(RKRequestMethod)method
                                                    path:(NSString *)path
                                              parameters:(NSDictionary *)parameters
-                              constructingBodyWithBlock:(void (^)(id <RKMultipartFormData> formData))block;
+                              constructingBodyWithBlock:(void (^)(id <RKAFMultipartFormData> formData))block;
 
 /**
  Creates an `NSMutableURLRequest` object with the `NSURL` returned by the router for the given route name and object and the given parameters.

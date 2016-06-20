@@ -475,7 +475,7 @@ static BOOL RKDoesArrayOfResponseDescriptorsContainMappingForClass(NSArray *resp
                                                  method:(RKRequestMethod)method
                                                    path:(NSString *)path
                                              parameters:(NSDictionary *)parameters
-                              constructingBodyWithBlock:(void (^)(id <RKMultipartFormData> formData))block
+                              constructingBodyWithBlock:(void (^)(id <RKAFMultipartFormData> formData))block
 {
     NSString *requestPath = (path) ? path : [[self.router URLForObject:object method:method] relativeString];
     id requestParameters = [self mergedParametersWithObject:object method:method parameters:parameters];

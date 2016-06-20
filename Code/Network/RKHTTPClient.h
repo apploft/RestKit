@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "RKHTTPRequestSerialization.h"
+#import "RKAFURLRequestSerialization.h"
 #import "RKSerialization.h"
 #import "RKHTTP.h"
 
@@ -29,7 +29,7 @@
  @warning `requestSerializer` must not be `nil`.
  */
 //@TODO: This is still needed for multipart uploads, we need to refactor this out to not depend on AFN
-@property (nonatomic) id <RKHTTPRequestSerialization> requestSerializer;
+@property (nonatomic) RKAFHTTPRequestSerializer *requestSerializer;
 
 /**
  Requests created with `requestWithMethod:URLString:parameters:` are constructed with a set of default headers using a parameter serialization specified by this property. By default, this serializes query string parameters for `GET`, `HEAD`, and `DELETE` requests, or otherwise uses this class if specified or selects an appropriate serializer from RKMIMETypeSerialization:dataFromObject:mimeType.
@@ -124,7 +124,7 @@
 - (NSMutableURLRequest *)multipartFormRequestWithMethod:(NSString *)method
                                                    path:(NSString *)path
                                              parameters:(NSDictionary *)parameters
-                              constructingBodyWithBlock:(void (^)(id <RKMultipartFormData> formData))block;
+                              constructingBodyWithBlock:(void (^)(id <RKAFMultipartFormData> formData))block;
 
 
 /**

@@ -6,9 +6,9 @@
 //  Copyright (c) 2015 RestKit. All rights reserved.
 //
 
-#import "AFURLResponseSerialization.h"
+#import "RKAFURLResponseSerialization.h"
 #import "RKHTTPResponseSerialization.h"
 
-@interface RKHTTPResponseSerializer : AFHTTPResponseSerializer <RKHTTPResponseSerialization>
+@interface RKHTTPResponseSerializer : RKAFHTTPResponseSerializer <RKHTTPResponseSerialization>
 
 @end

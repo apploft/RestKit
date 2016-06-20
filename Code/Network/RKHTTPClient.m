@@ -184,7 +184,7 @@ defaultHeaders = _defaultHeaders;
 - (NSMutableURLRequest *)multipartFormRequestWithMethod:(NSString *)method
                                                    path:(NSString *)path
                                              parameters:(NSDictionary *)parameters
-                              constructingBodyWithBlock:(void (^)(id <RKMultipartFormData> formData))block{
+                              constructingBodyWithBlock:(void (^)(id <RKAFMultipartFormData> formData))block{
     
     NSError *error;
     

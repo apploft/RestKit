@@ -62,6 +62,7 @@ NSString *RKURLEncodedStringFromDictionaryWithEncoding(NSDictionary *dictionary,
  */
 NSString *RKPercentEscapedQueryStringFromStringWithEncoding(NSString *string, NSStringEncoding encoding);
 
+
 /**
  Creates and returns a new `NSDictionary` object containing the keys and values in the query string of the given string.
  

@@ -123,4 +123,12 @@
     expect(dictionary).to.equal(expectedDictionary);
 }
 
+-(void)testPercentEscapedQueryStringFromStringWithEncoding
+{
+    NSString *query = @"key-:/.?&=;+!@$()~";
+    NSString *escapedQueryString = RKPercentEscapedQueryStringFromStringWithEncoding(query, NSUTF8StringEncoding);
+    NSString *expectedEscapedQueryString = @"key-%3A%2F%2E%3F%26%3D%3B%2B%21%40%24%28%29%7E";    
+    expect(escapedQueryString).to.equal(expectedEscapedQueryString);
+}
+
 @end
