@@ -6,6 +6,8 @@
 //  Copyright (c) 2015 RestKit. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
+
 @protocol RKHTTPResponseSerialization <NSObject>
 
 /**

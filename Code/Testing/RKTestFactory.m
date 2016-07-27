@@ -27,11 +27,9 @@
 #import "RKObjectRequestOperation.h"
 #import "RKHTTPClient.h"
 
-#ifdef _COREDATADEFINES_H
-#if __has_include("RKCoreData.h")
+#if __has_include("CoreData.h")
 #define RKCoreDataIncluded
 #import "RKManagedObjectStore.h"
-#endif
 #endif
 
 // Expose MIME Type singleton and initialization routine
@@ -77,7 +75,7 @@
 {
     self = [super init];
     if (self) {
-        self.baseURL = [NSURL URLWithString:@"http://127.0.0.1:4567"];
+        self.baseURL = [NSURL URLWithString:@"http://localhost:4567"];
         self.factoryBlocks = [NSMutableDictionary new];
         self.sharedObjectsByFactoryName = [NSMutableDictionary new];
         [self defineDefaultFactories];
@@ -258,9 +256,6 @@
         [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
     }
 
-    // Clear the NSURLCache
-    [[NSURLCache sharedURLCache] removeAllCachedResponses];
-
     if ([RKTestFactory sharedFactory].setUpBlock) [RKTestFactory sharedFactory].setUpBlock();
 }
 
@@ -270,7 +265,6 @@
 
     // Cancel any network operations and clear the cache
     [[RKObjectManager sharedManager].operationQueue cancelAllOperations];
-    [[NSURLCache sharedURLCache] removeAllCachedResponses];
 
     // Cancel any object mapping in the response mapping queue
     [[RKObjectRequestOperation responseMappingQueue] cancelAllOperations];

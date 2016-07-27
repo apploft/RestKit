@@ -31,7 +31,7 @@
 #import <Availability.h>
 
 #if __IPHONE_OS_VERSION_MIN_REQUIRED
-//#import "AFNetworkActivityIndicatorManager.h"
+#import "AFRKNetworkActivityIndicatorManager.h"
 #endif
 
 // Set Logging Component
@@ -193,14 +193,14 @@ NSString *const RKObjectRequestOperationMappingDidFinishUserInfoKey = @"mappingF
 static void RKIncrementNetworkActivityIndicator()
 {
     #if __IPHONE_OS_VERSION_MIN_REQUIRED
-//        [[AFNetworkActivityIndicatorManager sharedManager] incrementActivityCount];
+        [[AFRKNetworkActivityIndicatorManager sharedManager] incrementActivityCount];
     #endif
 }
 
 static void RKDecrementNetworkAcitivityIndicator()
 {
     #if __IPHONE_OS_VERSION_MIN_REQUIRED
-//        [[AFNetworkActivityIndicatorManager sharedManager] decrementActivityCount];
+        [[AFRKNetworkActivityIndicatorManager sharedManager] decrementActivityCount];
     #endif
 }
 

@@ -26,7 +26,7 @@
     RKLogConfigureByName("RestKit/ObjectMapping", RKLogLevelTrace);
 
     //let AFNetworking manage the activity indicator
-//    [AFNetworkActivityIndicatorManager sharedManager].enabled = YES;
+    [AFRKNetworkActivityIndicatorManager sharedManager].enabled = YES;
   
     // Initialize HTTPClient
     NSURL *baseURL = [NSURL URLWithString:@"https://api.twitter.com/1.1"];
