@@ -473,7 +473,7 @@ FOUNDATION_EXPORT NSString * const RKAFNetworkingOperationFailingURLRequestError
  `kAFUploadStream3GSuggestedDelay`
  Duration of delay each time a packet is read. Equal to 0.2 seconds.
  */
-FOUNDATION_EXPORT NSUInteger const kAFUploadStream3GSuggestedPacketSize;
-FOUNDATION_EXPORT NSTimeInterval const kAFUploadStream3GSuggestedDelay;
+FOUNDATION_EXPORT NSUInteger const kRKAFUploadStream3GSuggestedPacketSize;
+FOUNDATION_EXPORT NSTimeInterval const kRKAFUploadStream3GSuggestedDelay;
 
 NS_ASSUME_NONNULL_END

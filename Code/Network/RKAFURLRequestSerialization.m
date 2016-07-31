@@ -601,8 +601,8 @@ static inline NSString * RKAFContentTypeForPathExtension(NSString *extension) {
     }
 }
 
-NSUInteger const kAFUploadStream3GSuggestedPacketSize = 1024 * 16;
-NSTimeInterval const kAFUploadStream3GSuggestedDelay = 0.2;
+NSUInteger const kRKAFUploadStream3GSuggestedPacketSize = 1024 * 16;
+NSTimeInterval const kRKAFUploadStream3GSuggestedDelay = 0.2;
 
 @interface RKAFHTTPBodyPart : NSObject
 @property (nonatomic, assign) NSStringEncoding stringEncoding;
