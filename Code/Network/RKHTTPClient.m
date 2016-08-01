@@ -73,42 +73,14 @@ defaultHeaders = _defaultHeaders;
     return self;
 }
 
-
-/****
-   TODO apploft: This seems to be an unused and also weird method
-                 no really clear what it's supposed to be.
- ****/
-- (void)addDefaultHeader:(NSString *)header
-                   value:(NSString *)value{
-    
-    if(!value){
-        return;
-    }
-    
-    NSMutableArray *headers;
-    if(!self.defaultHeaders[header]){
-        headers = [NSMutableArray new];
-        self.defaultHeaders[header] = headers;
-    }
-    
-    if(![headers containsObject:value]){
-        [headers addObject:value];
-    }
-}
-
-/****
- TODO apploft: Get rid of bullshit implementation.
- ****/
 - (void)setDefaultHeader:(NSString *)header
                    value:(NSString *)value{
-    
-    if(!value){
+    if (!value) {
         [self.defaultHeaders removeObjectForKey:header];
         return;
     }
     
-    //Set the header to the new value
-    self.defaultHeaders[header] = [NSMutableArray arrayWithObjects:value, nil];
+    self.defaultHeaders[header] = value;
 }
 
 ///-------------------------------
@@ -129,11 +101,8 @@ defaultHeaders = _defaultHeaders;
     request.URL = url;
     
     //Set default HTTP headers in the request
-    [self.defaultHeaders enumerateKeysAndObjectsUsingBlock:^(id field, id values, BOOL * __unused stop) {
-        
-        for(NSString *value in values){
-            [request addValue:value forHTTPHeaderField:field];
-        }
+    [self.defaultHeaders enumerateKeysAndObjectsUsingBlock:^(id field, id value, BOOL * __unused stop) {
+        [request addValue:value forHTTPHeaderField:field];
     }];
     
     //Detect the request mime type and default ot JSON if not set
