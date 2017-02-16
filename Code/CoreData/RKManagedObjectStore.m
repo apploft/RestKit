@@ -52,9 +52,21 @@ static BOOL RKIsManagedObjectContextDescendentOfContext(NSManagedObjectContext *
 
 static NSSet *RKSetOfManagedObjectIDsFromManagedObjectContextDidSaveNotification(NSNotification *notification)
 {
-    NSUInteger count = [[[notification.userInfo allValues] valueForKeyPath:@"@sum.@count"] unsignedIntegerValue];
+    /* Once upon a time the 'notification' obviously only contained arrays with the inserted, updated, deleted
+       objects. Nowadays also a managed object context will be provided as well. Applying 'valueForKeyPath: @"@sum.@count' 
+       to it would lead to an exception, so we have to filter only the countable entities.
+     */
+    NSMutableArray *countableEntries = [NSMutableArray new];
+    
+    [[notification.userInfo allValues] enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([obj respondsToSelector:@selector(count)]) {
+            [countableEntries addObject:obj];
+        }
+    }];
+    
+    NSUInteger count = [[countableEntries valueForKeyPath:@"@sum.@count"] unsignedIntegerValue];
     NSMutableSet *objectIDs = [NSMutableSet setWithCapacity:count];
-    for (NSSet *objects in [notification.userInfo allValues]) {
+    for (NSSet *objects in countableEntries) {
         [objectIDs unionSet:[objects valueForKey:@"objectID"]];
     }
     return objectIDs;
